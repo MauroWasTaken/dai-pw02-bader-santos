@@ -1,3 +1,10 @@
+# PracticalWork 2
+
+Subjects: DAI
+Labo: Yes
+Status: In progress
+Due date: 02/12/2025
+
 # **DAI 2025 - project 02 - Bader Gabriel Santos Mauro**
 
 Our tic tac toe game is a Java-based command-line application designed to allow users to play against each other online. The project will have a client-server structure, where different clients connect to a server and then are able to match each other.
@@ -27,5 +34,335 @@ The key features for this project would be:
 | Client | client -p <port> | start application in client mode and connects to server in <port> |
 
 the defaults are :
+
 - 42069: for the port
 - 12: for the nbplayers
+
+## Application Protocol
+
+### Section 1 - Overview
+
+Tic Tac Toe (TTT) protocol is a protocol that will allows for the user to login to the server, match other players, and play a matches of tic tac toe
+
+### Section 2 - Transport protocol
+
+**Connection**
+
+The TTT protocol is a text message transport protocol. It must use the TCP (Transmission Control Protocol) to ensure the reliability of data transmission and uses port 42069 by default.
+
+Every message must be encoded in UTF-8 and delimited by a newline character (`\n`). The messages are treated as text messages.
+
+The initial connection must be established by the client.
+
+Once the connection is established, the client can join the server with a given username and a password encrypted with (TODO)(optional).
+
+The server must verify the following
+
+- that the username is not already taken by another user.
+- that the password is right
+
+If these conditions are met, the server allows the client to join.
+
+Otherwise, the server denies the client access and closes the connection.
+
+**Lobby**
+
+Then, the client can ask the server for all connected clients.
+
+The server returns the list of all connected clients with their current status, wins, draws, losses and win streak.
+
+The client can challenge another client.
+
+If the client isn’t connected the server will send an error message.
+
+Otherwise the server will notify them that they are being challenged.
+
+The second client can then accept the challenge or refuse them
+
+If the challenge is refused, the server will notify the first client.
+
+Otherwise the server will start a match and then it will pick a user at random to play first.
+
+**Game**
+
+The user who’s turn it is, can now select a spot on the grid
+
+if the move is valid the server will acknowledge the move and give the turn to the other user
+
+Otherwise, the server will refuse the move and the user will have to pick another spot on the board
+
+If the user who is waiting for his turn send a request / move it will be instantly refused by the server
+
+if at any point of the players disconnects, the remaining player should be awarded the win
+
+Once the last move is played, the server will do the following:
+
+- if there’s a winner, the winning client will receive a win message and the other one will receive a losing message server
+- if its a tie, both players should recieve a draw message from the server
+
+ both players should then ask for the list of all connected and the cycle continues
+
+### Section 3 - Messages
+
+**Login**
+
+The client sends a join message to the server indicating the client's username and an optional password.
+
+**Request**
+
+```
+LOGIN <username> <password>
+```
+
+- `username`: the user name of the client
+- `password`: the password of the client encrypted using (TODO)
+
+**Response**
+
+- `OK`: the client has been granted access to the server
+- `ERROR <code>`: an error occurred during the join. The error code is an integer between 1 and 2 inclusive. The error codes are as follows:
+    - 1: the client's name is already in use
+    - 2: password is wrong
+
+**List connected players**
+
+The client sends a message to the server to request the list of connected players.
+
+**Request**
+
+```
+PLAYERS
+```
+
+**Response**
+
+- `PLAYERS <client1> <client2> <client3> ...`: the list of connected clients. The clients are separated by a space.
+    - the individual clients are seperated by <username>:<wins>:<losses>:<draws>:<winstreaks>:<status>, seperated by “.”
+        - status is an integer between 0 and 1 inclusive, the following codes are:
+            - 0 - playing
+            - 1 - in lobby (waiting)
+
+**Challenge player**
+
+The client sends a chalenge to the server indicating the recipient. The server is then responsible for sending the challenge to the recipient.
+
+**Request**
+
+```
+CHALLENGE <username>
+
+```
+
+**Response**
+
+- `ERROR <code>`: an error occurred while sending the message. The error code is an integer between 1 and 2 inclusive. The error codes are as follows:
+    - 1: the recipient is not connected
+    - 2: the recipient is busy
+
+**Accept a challenge**
+
+After receiving a challenge from the server the client may accept as follows
+
+**Request**
+
+```
+ACCEPT <username>
+```
+
+- `username`: the opponnent’s username
+
+**Response**
+
+- `ERROR <code>`: an error occurred while sending the message. The error code is an integer between 1 and 1 inclusive. The error codes are as follows:
+    - 1: user isn’t challenging
+
+**Refuse a challenge**
+
+After receiving a challenge from the server the client may accept as follows
+
+**Request**
+
+```
+REFUSE <username>
+```
+
+- `username`: the opponnent’s username
+
+**Response**
+
+- `ERROR <code>`: an error occurred while sending the message. The error code is an integer between 1 and 1 inclusive. The error codes are as follows:
+    - 1: user isn’t challenging
+
+**Game Start**
+
+The server indicates to the different client that the game is going to start with their opponent username and a value that indicates if they are first
+
+**Request**
+
+```
+STARTGAME <username> <is_first>
+```
+
+- `username`: the opponnent’s username
+- `is_first`: is an integer between 1 and 2 inclusive : the codes have the following meanings:
+    - 1: the client plays first
+    - 2: the client plays second
+
+**Response**
+
+None.
+
+**Play (client)**
+
+The client whose turn it is indicates where the player choose to play. The server then will send that information to the other client.
+
+**Request**
+
+```
+PLAY <line> <row>
+```
+
+- `line`: is an integer between 0 and 2 inclusive that indicates which line the player wants to play
+- `row`: is an integer between 0 and 2 inclusive that indicates which row the player wants to play
+
+**Response**
+
+- `OK`: the move is valid
+- `ERROR <code>`:  The error code is an integer between 1 and 1 inclusive. The error codes are as follows:
+    - 1: illegal move
+
+**Play (server)**
+
+The redirection from the client’s move to the second client
+
+**Request**
+
+```
+PLAY <line> <row>
+```
+
+- `line`: is an integer between 0 and 2 inclusive that indicates which line the player played
+- `row`: is an integer between 0 and 2 inclusive that indicates which row the player played
+
+**Response**
+
+None.
+
+**Game end**
+
+The server indicates both clients that their game is over and send them the result.
+
+- this might also be called in case of a disconnection.
+
+**Request**
+
+```
+ENDGAME <code>
+```
+
+- `code`: is an integer between 0 and 3 inclusive that indicates the result of the match. the codes have the following meaning:
+    - 0 : draw
+    - 1 : client won
+    - 2 : client lost
+    - 3 : opposing client disconnected
+
+**Response**
+
+None.
+
+### Section 4 - Examples
+
+**First connection and login**
+
+```mermaid
+sequenceDiagram
+    Client->>Server: 1. Establish connection
+    Server-->>Client: 2. Connection established
+    Note over Client,Server: Login process
+    Client->>Server: 3. LOGIN <username> <password>
+    par Login is valid
+	    Server-->>Client: 4. OK
+        and Login isnt valid 
+        	    Server-->>Client: 4. ERROR <error code>
+        end
+```
+
+**Lobby and Matchmaking (nominal case)**
+
+```mermaid
+sequenceDiagram
+    Client->>Server: 5. PLAYERS
+	  Server-->>Client: 6. PLAYERS <username>:<wins>:<losses>:<draws>:<winstreaks>:<status> <username>...
+    Note over Client,Client2: matchmaking process
+    Client ->> Server: 7. CHALLENGE <username>
+    Server ->> Client2 : 8. CHALLENGE <username>
+    par Client 2 accepts the match
+	    Client2 ->> Server: 9. ACCEPT <username>
+	    Server ->> Client : 10. STARTGAME <username> <is first>
+	    Server ->> Client2 : 10. STARTGAME <username> <is first>
+    and Client 2 refuses the match
+      Client2 ->> Server: 9. REFUSE <username>
+	    Server ->> Client : 10. REFUSE <username>
+    end
+	  
+```
+
+**Lobby and Matchmaking (missing player)**
+
+```mermaid
+sequenceDiagram
+    Client->>Server: 5. PLAYERS
+	  Server-->>Client: 6. PLAYERS <client1> <client2>
+    Note over Client,Server: matchmaking process
+    Client ->> Server: 7. CHALLENGE <username>
+    Server -->> Client: 8 ERROR <error code>
+	  
+```
+
+**Game (playing moves)**
+
+```mermaid
+sequenceDiagram
+    Note over Client: has turn
+    Client->>Server: 11. PLAY <line> <row>
+    par Move is valid
+		Server -->> Client: 12. OK
+		Server ->> Client2: 13. PLAY <line> <row>
+    Note over Client2: has turn
+    and Move is invalid
+	    Server ->> Client : 12. ERROR <error code>
+	    Note over Client: keeps his turn and may play again
+    end
+	  
+```
+
+**Game (End)**
+
+```mermaid
+sequenceDiagram
+    Note over Client: has turn
+    Note over Client: next move will end game
+    Client->>Server: 11. PLAY <line> <row>
+		Server -->> Client: 12. OK
+		Server ->> Client2: 13. PLAY <line> <row>
+    par Client1 Wins
+		Server ->> Client: 14. ENDGAME 1
+		Server ->> Client2: 14. ENDGAME 2
+	  and Draw
+		Server ->> Client: 14. ENDGAME 0
+		Server ->> Client2: 14. ENDGAME 0
+    end
+	  note over Client : back to Lobby behavior
+	  note over Client2 : back to lobby behavior
+	  
+```
+
+**Game (Disconnection)**
+
+```mermaid
+sequenceDiagram
+    Client->>Server: Connection terminated
+		Server ->> Client2: ENDGAME 3
+	  note over Client2 : back to lobby behavior
+	  
+```

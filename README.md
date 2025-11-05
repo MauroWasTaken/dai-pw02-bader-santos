@@ -1,10 +1,3 @@
-# PracticalWork 2
-
-Subjects: DAI
-Labo: Yes
-Status: In progress
-Due date: 02/12/2025
-
 # **DAI 2025 - project 02 - Bader Gabriel Santos Mauro**
 
 Our tic tac toe game is a Java-based command-line application designed to allow users to play against each other online. The project will have a client-server structure, where different clients connect to a server and then are able to match each other.

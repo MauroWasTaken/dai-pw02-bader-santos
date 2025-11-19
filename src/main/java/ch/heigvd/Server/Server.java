@@ -1,5 +1,6 @@
-package ch.heigvd.commands;
+package ch.heigvd.Server;
 
+import ch.heigvd.Client.Client;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;

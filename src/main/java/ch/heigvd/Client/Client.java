@@ -1,5 +1,6 @@
-package ch.heigvd.commands;
+package ch.heigvd.Client;
 
+import ch.heigvd.Server.Server;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;

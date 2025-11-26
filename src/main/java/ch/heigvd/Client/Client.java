@@ -1,5 +1,7 @@
 package ch.heigvd.Client;
 
+import static ch.heigvd.Client.Functions.Login.login;
+
 import ch.heigvd.Server.Server;
 import java.io.*;
 import java.net.Socket;
@@ -9,11 +11,18 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "client", description = "Start the client part of the network game.")
 public class Client implements Callable<Integer> {
+
   public enum Message {
     GUESS,
     RESTART,
     HELP,
     QUIT,
+    LOGIN,
+    PLAYERS,
+    CHALLENGE,
+    ACCEPT,
+    REFUSE,
+    PLAY
   }
 
   // End of line character
@@ -28,7 +37,7 @@ public class Client implements Callable<Integer> {
   @CommandLine.Option(
       names = {"-p", "--port"},
       description = "Port to use (default: ${DEFAULT-VALUE}).",
-      defaultValue = "6433")
+      defaultValue = "42069")
   protected int port;
 
   @Override
@@ -39,89 +48,26 @@ public class Client implements Callable<Integer> {
         Writer writer = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8);
         BufferedWriter out = new BufferedWriter(writer)) {
       System.out.println("[Client] Connected to " + host + ":" + port);
-      System.out.println();
+      // checking connection
+      String serverResponse = in.readLine(); // stuck here
+      Server.Message message = Server.Message.valueOf(serverResponse.split(" ")[0]);
+      if (message != Server.Message.OK) {
+        System.out.println("[Client] Server is full");
+        socket.close();
+        return 1;
+      }
+      // login
+      String username = login(socket, in, out);
 
-      help();
-
-      while (!socket.isClosed()) {
-        System.out.print("> ");
-
-        Reader inputReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
-        BufferedReader bir = new BufferedReader(inputReader);
-        String userInput = bir.readLine();
-
-        try {
-          String[] userInputParts = userInput.split(" ", 2);
-          Message message = Message.valueOf(userInputParts[0].toUpperCase());
-
-          String request = null;
-
-          switch (message) {
-            case GUESS -> {
-              int number = Integer.parseInt(userInputParts[1]);
-
-              request = Message.GUESS + " " + number + END_OF_LINE;
-            }
-            case RESTART -> {
-              request = Message.RESTART + END_OF_LINE;
-            }
-            case QUIT -> {
-              socket.close();
-              continue;
-            }
-            case HELP -> help();
-          }
-
-          if (request != null) {
-            out.write(request);
-            out.flush();
-          }
-        } catch (Exception e) {
-          System.out.println("Invalid command. Please try again.");
-          continue;
-        }
-
-        String serverResponse = in.readLine();
-
-        if (serverResponse == null) {
-          socket.close();
-          continue;
-        }
-
-        String[] serverResponseParts = serverResponse.split(" ", 2);
-
-        Server.Message message = null;
-        try {
-          message = Server.Message.valueOf(serverResponseParts[0]);
-        } catch (IllegalArgumentException e) {
-          // Do nothing
-        }
-
-        switch (message) {
-          case HIGHER -> System.out.println("The number is higher.");
-          case LOWER -> System.out.println("The number is lower.");
-          case CORRECT -> System.out.println("Congratulations! You guessed the number.");
-          case OK -> System.out.println("Game restarted.");
-          case ERROR -> {
-            if (serverResponseParts.length < 2) {
-              System.out.println("Invalid message. Please try again.");
-              break;
-            }
-
-            String error = serverResponseParts[1];
-            System.out.println("Error " + error);
-          }
-          case null, default ->
-              System.out.println("Invalid/unknown command sent by server, ignore.");
-        }
+      if (username == null) {
+        System.out.println("[Client] Closing connection and quitting...");
+        return 1;
       }
 
-      System.out.println("[Client] Closing connection and quitting...");
     } catch (Exception e) {
       System.out.println("[Client] Exception: " + e);
       return 1;
     }
-
     return 0;
   }
 

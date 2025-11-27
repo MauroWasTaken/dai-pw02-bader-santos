@@ -1,7 +1,10 @@
 package ch.heigvd.Server;
 
 import static ch.heigvd.Server.Functions.Login.login;
+import static ch.heigvd.Server.Functions.Matchmaking.*;
 
+import ch.heigvd.Client.Client;
+import ch.heigvd.Common.Norms;
 import ch.heigvd.Common.Player;
 import java.io.*;
 import java.net.ServerSocket;
@@ -19,12 +22,13 @@ import picocli.CommandLine;
 public class Server implements Callable<Integer> {
   static AtomicInteger playerCount = new AtomicInteger(0);
   public static CopyOnWriteArrayList<Player> players = new CopyOnWriteArrayList<>();
-  // End of line character
-  public static String END_OF_LINE = "\n";
 
   public enum Message {
     OK,
     ERROR,
+    CHALLENGES,
+    REFUSE,
+    GAMESTART
   }
 
   @CommandLine.Option(
@@ -60,6 +64,7 @@ public class Server implements Callable<Integer> {
   static class ClientHandler implements Runnable {
 
     private final Socket socket;
+    private boolean ingame = false;
 
     public ClientHandler(Socket socket) {
       this.socket = socket;
@@ -68,7 +73,7 @@ public class Server implements Callable<Integer> {
           BufferedWriter out =
               new BufferedWriter(
                   new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
-          out.write(Message.ERROR + END_OF_LINE);
+          out.write(Message.ERROR + Norms.END_OF_LINE);
           out.flush();
           socket.close();
         } catch (IOException e) {
@@ -89,21 +94,50 @@ public class Server implements Callable<Integer> {
               new BufferedWriter(
                   new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
         System.out.println(playerCount.get() + " / " + playerThreads + " players connected.");
-        out.write(Message.OK + END_OF_LINE);
+        out.write(Message.OK + Norms.END_OF_LINE);
         out.flush();
-        String username = login(socket, in, out);
-        if (username == null) {
+        // login
+        Player player = login(socket, in, out);
+        if (player == null) {
           return;
         }
+
         while (!socket.isClosed()) {
-          // socket.close();
+          String clientResponse = in.readLine();
+          String[] clientResponseParts = clientResponse.split(" ", 2);
+          Client.Message message = Client.Message.valueOf(clientResponseParts[0]);
+          if (ingame) {
+            // game functions
+          } else {
+            // lobby functions
+            switch (message) {
+                // matchmaking functions
+              case CHALLENGES:
+                getChallenges(socket, in, out, player);
+                break;
+              case CHALLENGE:
+                ingame = challengePlayer(socket, in, out, player, players, clientResponseParts[1]);
+                break;
+              case ACCEPT:
+                ingame = acceptChallenge(socket, in, out, player, clientResponseParts[1]);
+                break;
+              case REFUSE:
+                refuseChallenge(socket, in, out, player, clientResponseParts[1]);
+                break;
+              case QUIT:
+                socket.close();
+                break;
+              default:
+                break;
+            }
+          }
         }
         playerCount.addAndGet(-1);
-        players.removeIf(player -> Objects.equals(player.username, username));
+        players.removeIf(p -> Objects.equals(p.username, player.username));
         System.out.println("[Server] closing connection");
       } catch (IOException e) {
         if (playerCount.get() >= playerThreads) {
-          System.out.println("[Server] No avaible slots " + playerCount + "/" + playerThreads);
+          System.out.println("[Server] No available slots " + playerCount + "/" + playerThreads);
         } else {
           System.out.println("[Server] exception: " + e);
         }

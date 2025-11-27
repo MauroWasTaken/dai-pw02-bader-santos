@@ -1,6 +1,7 @@
 package ch.heigvd.Server.Functions;
 
 import ch.heigvd.Client.Client;
+import ch.heigvd.Common.Norms;
 import ch.heigvd.Common.Player;
 import ch.heigvd.Server.Server;
 import java.io.*;
@@ -9,7 +10,7 @@ import java.net.Socket;
 public class Login {
   public static final String LOGIN_FILE = "logins.txt";
 
-  public static String login(Socket socket, BufferedReader in, BufferedWriter out) {
+  public static Player login(Socket socket, BufferedReader in, BufferedWriter out) {
     // making sure the file exists
     File loginsFile = new File(LOGIN_FILE);
     try {
@@ -63,18 +64,18 @@ public class Login {
         if (found) {
           if (passwordCorrect) {
             if (Server.players.stream().anyMatch(p -> p.username.equals(username))) {
-              out.write(Server.Message.ERROR + " 1" + Server.END_OF_LINE); // user already logged in
+              out.write(Server.Message.ERROR + " 1" + Norms.END_OF_LINE); // user already logged in
               out.flush();
             } else {
               Player player = new Player(username);
               Server.players.add(player);
-              out.write(Server.Message.OK + Server.END_OF_LINE);
+              out.write(Server.Message.OK + Norms.END_OF_LINE);
               out.flush();
               loginsReader.close();
-              return username;
+              return player;
             }
           } else { // wrong password
-            out.write(Server.Message.ERROR + " 2" + Server.END_OF_LINE);
+            out.write(Server.Message.ERROR + " 2" + Norms.END_OF_LINE);
             out.flush();
           }
         } else {
@@ -84,10 +85,10 @@ public class Login {
           loginsWriter.close();
           Player player = new Player(username);
           Server.players.add(player);
-          out.write(Server.Message.OK + Server.END_OF_LINE);
+          out.write(Server.Message.OK + Norms.END_OF_LINE);
           out.flush();
           loginsReader.close();
-          return username;
+          return player;
         }
       }
     } catch (IOException e) {

@@ -1,16 +1,26 @@
 package ch.heigvd.Client;
 
 import static ch.heigvd.Client.Functions.Login.login;
+import static ch.heigvd.Client.Functions.Matchmaking.*;
+import static ch.heigvd.Client.Functions.UI.*;
 
+import ch.heigvd.Common.Norms;
+import ch.heigvd.Common.Player;
 import ch.heigvd.Server.Server;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "client", description = "Start the client part of the network game.")
 public class Client implements Callable<Integer> {
+  public static ArrayList<Player> players = new ArrayList<>();
+  public static ArrayList<Player> challenges = new ArrayList<>();
+  static boolean inLobby = false;
+  static boolean inGame = false;
+  public static String message = "";
 
   public enum Message {
     GUESS,
@@ -19,19 +29,21 @@ public class Client implements Callable<Integer> {
     QUIT,
     LOGIN,
     PLAYERS,
+    CHALLENGES,
     CHALLENGE,
     ACCEPT,
     REFUSE,
     PLAY
   }
 
-  // End of line character
-  public static String END_OF_LINE = "\n";
+  public static final String[] lobbyOptions = {
+    "CHALLENGE", "ACCEPT", "REFUSE", "REFRESH", "HELP", "QUIT"
+  };
 
   @CommandLine.Option(
       names = {"-H", "--host"},
       description = "Host to connect to.",
-      required = true)
+      defaultValue = "localhost")
   private String host;
 
   @CommandLine.Option(
@@ -46,10 +58,11 @@ public class Client implements Callable<Integer> {
         Reader reader = new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8);
         BufferedReader in = new BufferedReader(reader);
         Writer writer = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8);
-        BufferedWriter out = new BufferedWriter(writer)) {
+        BufferedWriter out = new BufferedWriter(writer);
+        BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in))) {
       System.out.println("[Client] Connected to " + host + ":" + port);
       // checking connection
-      String serverResponse = in.readLine(); // stuck here
+      String serverResponse = in.readLine();
       Server.Message message = Server.Message.valueOf(serverResponse.split(" ")[0]);
       if (message != Server.Message.OK) {
         System.out.println("[Client] Server is full");
@@ -57,11 +70,51 @@ public class Client implements Callable<Integer> {
         return 1;
       }
       // login
-      String username = login(socket, in, out);
-
+      final String username = login(socket, in, out);
       if (username == null) {
-        System.out.println("[Client] Closing connection and quitting...");
         return 1;
+      }
+
+      while (!socket.isClosed()) {
+        while (!inGame) {
+          fetchData(socket, in, out);
+          drawLobby(username);
+          String input = consoleReader.readLine();
+          if (input == null) {
+            break;
+          }
+          switch (input.split(" ")[0].toUpperCase()) {
+            case "CHALLENGE":
+              inGame = challengePlayer(socket, in, out, consoleReader, username);
+              break;
+            case "ACCEPT":
+              inGame = acceptChallenge(socket, in, out, consoleReader, challenges);
+              break;
+            case "REFUSE":
+              refuseChallenge(socket, in, out, consoleReader, challenges);
+              break;
+            case "":
+            case "REFRESH":
+              break;
+            case "QUIT":
+              out.write(Client.Message.QUIT + " " + Norms.END_OF_LINE);
+              out.flush();
+              System.out.println("Quitting...");
+              socket.close();
+              in.close();
+              out.close();
+              consoleReader.close();
+              return 0;
+            default:
+              help();
+              break;
+          }
+        }
+        // Game loop
+        if (inGame) {
+          // Placeholder for game loop
+          System.out.println("Game start!");
+        }
       }
 
     } catch (Exception e) {
@@ -71,11 +124,8 @@ public class Client implements Callable<Integer> {
     return 0;
   }
 
-  private static void help() {
-    System.out.println("Usage:");
-    System.out.println("  " + Message.GUESS + " <number> - Submit the number you want to guess.");
-    System.out.println("  " + Message.RESTART + " - Restart the game.");
-    System.out.println("  " + Message.QUIT + " - Close the connection to the server.");
-    System.out.println("  " + Message.HELP + " - Display this help message.");
+  public static void fetchData(Socket socket, BufferedReader in, BufferedWriter out) {
+    Client.challenges.clear();
+    Client.challenges.addAll(getChallenges(socket, in, out));
   }
 }

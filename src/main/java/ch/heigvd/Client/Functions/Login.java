@@ -1,6 +1,7 @@
 package ch.heigvd.Client.Functions;
 
 import ch.heigvd.Client.Client;
+import ch.heigvd.Common.Norms;
 import ch.heigvd.Server.Server;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -24,7 +25,7 @@ public class Login {
         System.out.print("Password: ");
         String password = bir.readLine();
         // send login info to server
-        request = Client.Message.LOGIN + " " + username + " " + password + Client.END_OF_LINE;
+        request = Client.Message.LOGIN + " " + username + " " + password + Norms.END_OF_LINE;
         out.write(request);
         out.flush();
         // read server response
@@ -46,7 +47,6 @@ public class Login {
 
         switch (message) {
           case OK:
-            System.out.println("Login successful. Welcome " + username + "!");
             return username;
           case ERROR:
             int errorCode = Integer.parseInt(serverResponseParts[1]);

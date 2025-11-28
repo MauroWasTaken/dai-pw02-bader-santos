@@ -13,16 +13,15 @@ public class Main {
    * @param args an array of arguments passed to the application
    */
   public static void main(String[] args) {
-
-    // Retrieve the name of the JAR file (source: https://stackoverflow.com/a/11159435)
+    // Define command name - source: https://stackoverflow.com/a/11159435
     String jarFilename =
         new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath())
             .getName();
 
-    // Create the root command
+    // Create root command
     Root root = new Root();
 
-    // Execute the command and get the exit code
+    // Execute command and get exit code
     int exitCode =
         new CommandLine(root)
             .setCommandName(jarFilename)

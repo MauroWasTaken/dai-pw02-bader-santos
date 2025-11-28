@@ -18,11 +18,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import picocli.CommandLine;
 
+/**
+ * Main class of the network game server.
+ *
+ * This class is used as the command "server" by Picocli. It opens a ServerSocket, accepts
+ * incoming connections, and assigns each client to a ClientHandler executed inside a thread pool.
+ */
 @CommandLine.Command(name = "server", description = "Start the server part of the network game.")
 public class Server implements Callable<Integer> {
+
+  /** Number of connected players. AtomicInteger ensures safe concurrent access. */
   static AtomicInteger playerCount = new AtomicInteger(0);
+
+  /** List of all connected players (thread-safe). */
   public static CopyOnWriteArrayList<Player> players = new CopyOnWriteArrayList<>();
 
+  /** Messages sent by the server to clients. */
   public enum Message {
     OK,
     ERROR,
@@ -31,24 +42,38 @@ public class Server implements Callable<Integer> {
     GAMESTART
   }
 
+  /**
+   * Number of threads available to handle players. This value can be set using the -t or --threads
+   * options.
+   */
   @CommandLine.Option(
       names = {"-t", "--threads"},
       description = "Number of threads to use for players (default: ${DEFAULT-VALUE}).",
       defaultValue = "12")
   protected static int playerThreads;
 
+  /** TCP port on which the server listens. This value can be set using the -p or --port options. */
   @CommandLine.Option(
       names = {"-p", "--port"},
       description = "Port to use (default: ${DEFAULT-VALUE}).",
       defaultValue = "42069")
   protected int port;
 
+  /**
+   * Method executed by Picocli when running the command.
+   *
+   * This method: - Creates a ServerSocket on the specified port - Initializes a thread pool -
+   * Accepts incoming connections - Starts a ClientHandler for each new connection
+   *
+   * @return 0 if everything went well, 1 in case of an IO error.
+   */
   @Override
   public Integer call() {
     try (ServerSocket serverSocket = new ServerSocket(port);
         ExecutorService executor = Executors.newFixedThreadPool(playerThreads + 1)) {
       System.out.println("[SERVER] Listening on port " + port);
 
+      // As long as the server socket remains open, keep listening
       while (!serverSocket.isClosed()) {
         Socket clientSocket = serverSocket.accept();
         executor.submit(new ClientHandler(clientSocket));
@@ -61,11 +86,21 @@ public class Server implements Callable<Integer> {
     return 0;
   }
 
+  /**
+   * Class responsible for handling a single client.
+   *
+   * Each instance is created when a new client connection is accepted.
+   */
   static class ClientHandler implements Runnable {
 
     private final Socket socket;
     private boolean ingame = false;
 
+    /**
+     * Creates a handler for a given client. If the server is full, the connection is refused.
+     *
+     * @param socket the client's socket
+     */
     public ClientHandler(Socket socket) {
       this.socket = socket;
       if (playerCount.get() >= playerThreads) {
@@ -84,6 +119,14 @@ public class Server implements Callable<Integer> {
       }
     }
 
+    /**
+     * Main loop of the client handler.
+     *
+     * This method handles: - Messages received from the client - Login - Matchmaking and lobby
+     * actions - Exceptions and cleanup
+     *
+     * @throws RuntimeException in case of unexpected error
+     */
     @Override
     public void run() {
       try (socket;
@@ -93,10 +136,12 @@ public class Server implements Callable<Integer> {
           BufferedWriter out =
               new BufferedWriter(
                   new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
+
         System.out.println(playerCount.get() + " / " + playerThreads + " players connected.");
         out.write(Message.OK + Norms.END_OF_LINE);
         out.flush();
-        // login
+
+        // Login phase
         Player player = login(socket, in, out);
         if (player == null) {
           return;
@@ -106,35 +151,44 @@ public class Server implements Callable<Integer> {
           String clientResponse = in.readLine();
           String[] clientResponseParts = clientResponse.split(" ", 2);
           Client.Message message = Client.Message.valueOf(clientResponseParts[0]);
+
           if (ingame) {
-            // game functions
+            // Game functions (to be implemented)
           } else {
-            // lobby functions
+
             switch (message) {
+
                 // matchmaking functions
               case CHALLENGES:
                 getChallenges(socket, in, out, player);
                 break;
+
               case CHALLENGE:
                 ingame = challengePlayer(socket, in, out, player, players, clientResponseParts[1]);
                 break;
+
               case ACCEPT:
                 ingame = acceptChallenge(socket, in, out, player, clientResponseParts[1]);
                 break;
+
               case REFUSE:
                 refuseChallenge(socket, in, out, player, clientResponseParts[1]);
                 break;
+
               case QUIT:
                 socket.close();
                 break;
+
               default:
                 break;
             }
           }
         }
+
         playerCount.addAndGet(-1);
         players.removeIf(p -> Objects.equals(p.username, player.username));
         System.out.println("[Server] closing connection");
+
       } catch (IOException e) {
         if (playerCount.get() >= playerThreads) {
           System.out.println("[Server] No available slots " + playerCount + "/" + playerThreads);

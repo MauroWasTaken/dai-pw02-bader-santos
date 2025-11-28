@@ -7,11 +7,25 @@ import ch.heigvd.Server.Server;
 import java.io.*;
 import java.net.Socket;
 
+/**
+ * Classe contenant la logique de login des joueurs.
+ *
+ * <p>Le login utilise un fichier texte appele logins.txt pour stocker les couples nom d utilisateur
+ * mot de passe.
+ *
+ * <p>Note: pour ce projet, nous avons fais le choix que le login soit un simple fichier txt car le
+ * login n'est pas la partie la plus importante à pratiquer ici. Bien évidemment il faudrai un login
+ * plus poussé
+ *
+ * <p>Le fonctionnement general est le suivant : - si l utilisateur existe et que le mot de passe
+ * est correct : connexion - si l utilisateur existe mais mauvais mot de passe : erreur - si l
+ * utilisateur n existe pas : creation du compte - si l utilisateur est deja connecte : erreur
+ */
 public class Login {
   public static final String LOGIN_FILE = "logins.txt";
 
   public static Player login(Socket socket, BufferedReader in, BufferedWriter out) {
-    // making sure the file exists
+    // On vérifie que le fichier existe
     File loginsFile = new File(LOGIN_FILE);
     try {
       if (loginsFile.createNewFile()) {
@@ -35,7 +49,7 @@ public class Login {
         try {
           message = Client.Message.valueOf(clientResponseParts[0]);
         } catch (IllegalArgumentException e) {
-          // Do nothing
+          // On fait rien
         }
         if (message != Client.Message.LOGIN) {
           socket.close();
@@ -44,7 +58,7 @@ public class Login {
         String username = clientResponseParts[1];
         String password = clientResponseParts[2];
 
-        // check if username is in logins.txt
+        // check si le username est dans logins.txt
         loginsFile = new File(LOGIN_FILE);
         BufferedReader loginsReader = new BufferedReader(new FileReader(loginsFile));
         String line;
@@ -60,7 +74,7 @@ public class Login {
             break;
           }
         }
-        // returns messages according to the situation
+        // returns un message en fonction de la situation
         if (found) {
           if (passwordCorrect) {
             if (Server.players.stream().anyMatch(p -> p.username.equals(username))) {
@@ -74,12 +88,12 @@ public class Login {
               loginsReader.close();
               return player;
             }
-          } else { // wrong password
+          } else { // faux mot de passe
             out.write(Server.Message.ERROR + " 2" + Norms.END_OF_LINE);
             out.flush();
           }
         } else {
-          // creates new user
+          // crée un nouveau user
           BufferedWriter loginsWriter = new BufferedWriter(new FileWriter(loginsFile, true));
           loginsWriter.write(username + " " + password + "\n");
           loginsWriter.close();

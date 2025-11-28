@@ -6,6 +6,12 @@ import picocli.CommandLine;
 
 public class Main {
 
+  /**
+   * Main entry point of the application. This method forwards the provided arguments to the Picocli
+   * command system.
+   *
+   * @param args an array of arguments passed to the application
+   */
   public static void main(String[] args) {
     // Define command name - source: https://stackoverflow.com/a/11159435
     String jarFilename =

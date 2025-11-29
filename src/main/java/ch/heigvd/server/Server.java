@@ -23,14 +23,14 @@ import picocli.CommandLine;
 /**
  * Main class of the network game server.
  *
- * <p>This class is used as the command "server" by Picocli. It opens a ServerSocket, accepts
+ * This class is used as the command "server" by Picocli. It opens a ServerSocket, accepts
  * incoming connections, and assigns each client to a ClientHandler executed inside a thread pool.
  */
 @CommandLine.Command(name = "server", description = "Start the server part of the network game.")
 public class Server implements Callable<Integer> {
   /** Number of connected players. AtomicInteger ensures safe concurrent access. */
   static AtomicInteger playerCount = new AtomicInteger(0);
-
+  
   /** List of all connected players (thread-safe). */
   public static CopyOnWriteArrayList<Player> players = new CopyOnWriteArrayList<>();
 
@@ -44,7 +44,6 @@ public class Server implements Callable<Integer> {
     PLAY,
     GAME_OVER;
   }
-
   /**
    * Number of threads available to handle players. This value can be set using the -t or --threads
    * options.
@@ -62,10 +61,10 @@ public class Server implements Callable<Integer> {
       defaultValue = "42069")
   protected int port;
 
-  /**
+    /**
    * Method executed by Picocli when running the command.
    *
-   * <p>This method: - Creates a ServerSocket on the specified port - Initializes a thread pool -
+   * This method: - Creates a ServerSocket on the specified port - Initializes a thread pool -
    * Accepts incoming connections - Starts a ClientHandler for each new connection
    *
    * @return 0 if everything went well, 1 in case of an IO error.
@@ -87,11 +86,10 @@ public class Server implements Callable<Integer> {
 
     return 0;
   }
-
-  /**
+   /**
    * Class responsible for handling a single client.
    *
-   * <p>Each instance is created when a new client connection is accepted.
+   * Each instance is created when a new client connection is accepted.
    */
   static class ClientHandler implements Runnable {
 
@@ -99,7 +97,6 @@ public class Server implements Callable<Integer> {
     private boolean inGame = false;
     private Game game = null;
     private Player player = null;
-
     /**
      * Creates a handler for a given client. If the server is full, the connection is refused.
      *
@@ -122,11 +119,10 @@ public class Server implements Callable<Integer> {
         playerCount.addAndGet(1);
       }
     }
-
     /**
      * Main loop of the client handler.
      *
-     * <p>This method handles: - Messages received from the client - Login - Matchmaking and lobby
+     * This method handles: - Messages received from the client - Login - Matchmaking and lobby
      * actions - Exceptions and cleanup
      *
      * @throws RuntimeException in case of unexpected error
@@ -161,9 +157,6 @@ public class Server implements Callable<Integer> {
             Client.Message message = Client.Message.valueOf(clientResponseParts[0]);
             Game result;
             switch (message) {
-              case PLAYERS_LIST:
-                sendListPlayers(socket, out, players);
-                break;
                 // matchmaking functions
               case CHALLENGES:
                 getChallenges(out, player);

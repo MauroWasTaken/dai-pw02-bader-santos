@@ -9,16 +9,15 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.net.Socket;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 /**
  * Class containing all matchmaking-related functions. This class centralizes the logic that manages
  * interactions between players.
  */
 public class Matchmaking {
-  /**
+    /**
    * Sends the list of pending challenges to the player.
    *
-   * <p>The message format is: CHALLENGES challengerName1;challengerName2;
+   * The message format is: CHALLENGES challengerName1;challengerName2;
    *
    * @param socket client socket
    * @param in input stream associated with the client
@@ -39,15 +38,14 @@ public class Matchmaking {
       System.out.println("[Server] Exception while fetching challenges: " + e);
     }
   }
-
   /**
    * Sends a challenge to a specific player.
    *
-   * <p>This function performs the following steps: - checks that the target player exists - ensures
+   * This function performs the following steps: - checks that the target player exists - ensures
    * the target player is not already in a game - adds a challenge to the target player's list -
    * waits for the target player to accept or refuse
    *
-   * <p>Error codes sent: ERROR 1 : player not found ERROR 2 : target player already in game
+   * Error codes sent: ERROR 1 : player not found ERROR 2 : target player already in game
    *
    * @param socket sender's socket
    * @param in sender's input stream
@@ -107,11 +105,10 @@ public class Matchmaking {
     }
     return null;
   }
-
   /**
    * Accepts a challenge sent by another player.
    *
-   * <p>This method: - finds the pending challenge corresponding to the given username - sets its
+   * This method: - finds the pending challenge corresponding to the given username - sets its
    * status to ACCEPTED - sets the player status to IN_GAME
    *
    * @param socket socket of the player accepting the challenge
@@ -147,11 +144,10 @@ public class Matchmaking {
     }
     return null;
   }
-
-  /**
+     /**
    * Refuses a challenge sent by another player.
    *
-   * <p>This method: - locates the challenge sent by the specified username - sets its status to
+   * This method: - locates the challenge sent by the specified username - sets its status to
    * REFUSED - removes the challenge from the player's list - notifies the client
    *
    * @param socket socket of the player refusing the challenge
@@ -175,25 +171,6 @@ public class Matchmaking {
       }
     } catch (Exception e) {
       System.out.println("[Server] Exception while refusing challenge: " + e);
-      try {
-        socket.close();
-      } catch (Exception ee) {
-        System.out.println("[Server] Exception while closing socket: " + ee);
-      }
-    }
-  }
-
-  public static void sendListPlayers(
-      Socket socket, BufferedWriter out, CopyOnWriteArrayList<Player> players) {
-    try {
-      for (Player p : players) {
-        out.write(p.toString());
-        out.write(Norms.ELEMENT_SEPARATOR);
-      }
-      out.write(Norms.END_OF_LINE);
-      out.flush();
-    } catch (Exception e) {
-      System.out.println("[Server] Exception while sending list player: " + e);
       try {
         socket.close();
       } catch (Exception ee) {

@@ -7,26 +7,7 @@ import ch.heigvd.common.Player;
 public class UI {
 
   public static void help() {
-    String help =
-        "\n=== Help Menu ===\n"
-            + "Here are the commands you can use in the lobby:\n\n"
-            + "  HELP\n"
-            + "      Show this help menu.\n\n"
-            + "  PLAYERS\n"
-            + "      Display the list of connected players.\n\n"
-            + "  CHALLENGE <username>\n"
-            + "      Send a challenge request to the specified player.\n"
-            + "      Example: CHALLENGE alice\n\n"
-            + "  ACCEPT <username>\n"
-            + "      Accept a challenge received from the given player.\n"
-            + "      Example: ACCEPT bob\n\n"
-            + "  REFUSE <username>\n"
-            + "      Refuse a challenge from the given player.\n"
-            + "      Example: REFUSE charlie\n\n"
-            + "  QUIT\n"
-            + "      Disconnect from the server and exit the game.\n\n"
-            + "====================================\n";
-
+    String help = "Usage:\n" + "TODO MEttre à jour plus tard\n";
     Client.message += help;
   }
 

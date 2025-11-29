@@ -1,4 +1,4 @@
-package ch.heigvd.Common;
+package ch.heigvd.common;
 
 import java.util.ArrayList;
 

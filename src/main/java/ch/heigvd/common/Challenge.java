@@ -1,8 +1,9 @@
-package ch.heigvd.Common;
+package ch.heigvd.common;
 
 public class Challenge {
   public volatile Player challenger;
   public volatile Status status;
+  public volatile Game game;
 
   public Challenge(String challengerUsername) {
     this.challenger = new Player(challengerUsername);

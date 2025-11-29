@@ -1,25 +1,13 @@
-package ch.heigvd.Client.Functions;
+package ch.heigvd.client.functions;
 
-import ch.heigvd.Client.Client;
-import ch.heigvd.Common.Player;
+import ch.heigvd.client.Client;
+import ch.heigvd.common.Game;
+import ch.heigvd.common.Player;
 
 public class UI {
 
   public static void help() {
-    String help =
-        "Usage:\n"
-            + "  "
-            + Client.Message.GUESS
-            + " <number> - Submit the number you want to guess.\n"
-            + "  "
-            + Client.Message.RESTART
-            + " - Restart the game.\n"
-            + "  "
-            + Client.Message.QUIT
-            + " - Close the connection to the server.\n"
-            + "  "
-            + Client.Message.HELP
-            + " - Display this help message.\n";
+    String help = "Usage:\n" + "TODO MEttre à jour plus tard\n";
     Client.message += help;
   }
 
@@ -58,5 +46,37 @@ public class UI {
       System.out.println(option + " ");
     }
     System.out.print("Please enter a command: ");
+  }
+
+  public static void drawGame(String username, Game game, boolean yourTurn) {
+    System.out.print("\033\143");
+    if (!Client.message.isEmpty()) System.out.print(Client.message + "\n\n");
+
+    System.out.println("Welcome to the Game " + username + " !");
+    Client.message = "";
+    System.out.println("== Game State ==");
+    printBoard(game.board);
+    if (yourTurn) {
+      System.out.println("It's your turn to play!");
+      System.out.println("== Commands ==:");
+      System.out.println("<row> <col>");
+      System.out.print("Please enter a command: ");
+    } else {
+      System.out.println("Waiting for opponent to play...");
+    }
+  }
+
+  private static void printBoard(String[] gameState) {
+    System.out.println("Current Board:");
+    System.out.println("  0 1 2");
+    for (int i = 0; i < 3; i++) {
+      System.out.print(i + " ");
+      for (int j = 0; j < 3; j++) {
+        System.out.print(gameState[i * 3 + j]);
+        if (j < 2) System.out.print("|");
+      }
+      System.out.println();
+      if (i < 2) System.out.println("  -----");
+    }
   }
 }

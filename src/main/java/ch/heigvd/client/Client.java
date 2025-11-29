@@ -30,7 +30,7 @@ public class Client implements Callable<Integer> {
     HELP,
     QUIT,
     LOGIN,
-    PLAYERS_LIST,
+    PLAYERS,
     CHALLENGES,
     CHALLENGE,
     ACCEPT,
@@ -39,7 +39,7 @@ public class Client implements Callable<Integer> {
   }
 
   public static final String[] lobbyOptions = {
-    "PLAYERS_LIST", "CHALLENGE", "ACCEPT", "REFUSE", "REFRESH", "HELP", "QUIT"
+    "CHALLENGE", "ACCEPT", "REFUSE", "REFRESH", "HELP", "QUIT"
   };
 
   @CommandLine.Option(
@@ -86,9 +86,6 @@ public class Client implements Callable<Integer> {
             break;
           }
           switch (input.split(" ")[0].toUpperCase()) {
-            case "PLAYERS_LIST":
-              listAllPlayer(socket, in, out, consoleReader);
-              break;
             case "CHALLENGE":
               inGame = challengePlayer(socket, in, out, consoleReader, username);
               break;
@@ -132,5 +129,6 @@ public class Client implements Callable<Integer> {
   public static void fetchData(Socket socket, BufferedReader in, BufferedWriter out) {
     Client.challenges.clear();
     Client.challenges.addAll(getChallenges(socket, in, out));
+    getAllPlayers(socket, in, out);
   }
 }

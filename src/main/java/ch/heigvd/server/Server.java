@@ -161,7 +161,7 @@ public class Server implements Callable<Integer> {
             Client.Message message = Client.Message.valueOf(clientResponseParts[0]);
             Game result;
             switch (message) {
-              case PLAYERS_LIST:
+              case PLAYERS:
                 sendListPlayers(socket, out, players);
                 break;
                 // matchmaking functions

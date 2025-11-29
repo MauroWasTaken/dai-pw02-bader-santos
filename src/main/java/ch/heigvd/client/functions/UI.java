@@ -39,21 +39,24 @@ public class UI {
 
     System.out.println("Welcome to the Lobby " + username + " !");
     Client.message = "";
-    System.out.println("=== Lobby ===");
+
+    System.out.println("\n=== Connected Players ===");
+
     for (Player p : Client.players) {
+
       System.out.println(
-          p.username
-              + " - Wins: "
+          "- "
+              + p.username
+              + " | Wins: "
               + p.wins
-              + " Losses: "
+              + " | Losses: "
               + p.losses
-              + " Draws: "
+              + " | Draws: "
               + p.draws
-              + " Win Streak: "
-              + p.winStreak
-              + " Status: "
-              + p.status);
+              + " | WinStreak: "
+              + p.winStreak);
     }
+
     if (!Client.challenges.isEmpty()) {
       System.out.println("== Challenges ==:");
       for (Player p : Client.challenges) {

@@ -162,4 +162,58 @@ public class Matchmaking {
       }
     }
   }
+
+  public static void listAllPlayer(
+      Socket socket, BufferedReader in, BufferedWriter out, BufferedReader consoleReader) {
+
+    if (!socket.isClosed()) {
+      try {
+
+        out.write(Client.Message.PLAYERS_LIST + " " + Norms.END_OF_LINE);
+        out.flush();
+
+        String serverResponse = in.readLine();
+        if (serverResponse == null) {
+          System.out.println("No response from server.");
+          return;
+        }
+
+        String[] raw = serverResponse.split(",");
+
+        int fieldsPerPlayer = 5;
+
+        System.out.println("\n=== Connected Players ===");
+
+        for (int i = 0; i + fieldsPerPlayer - 1 < raw.length; i += fieldsPerPlayer) {
+
+          String username = raw[i];
+          String wins = raw[i + 1];
+          String losses = raw[i + 2];
+          String draws = raw[i + 3];
+          String winStreak = raw[i + 4];
+
+          System.out.println(
+              "- "
+                  + username
+                  + " | Wins: "
+                  + wins
+                  + " | Losses: "
+                  + losses
+                  + " | Draws: "
+                  + draws
+                  + " | WinStreak: "
+                  + winStreak);
+        }
+
+        System.out.println("=========================\n");
+
+        // Pause avant retour menu
+        System.out.println("Press ENTER to continue...");
+        consoleReader.readLine();
+
+      } catch (Exception e) {
+        System.out.println("Error while reading players list: " + e);
+      }
+    }
+  }
 }

@@ -6,39 +6,37 @@ import ch.heigvd.common.Player;
 import ch.heigvd.server.Server;
 import java.io.*;
 import java.net.Socket;
+
 /**
  * Class containing the login logic for players.
  *
- * The login system uses a simple text file named logins.txt to store pairs of
- * username and password.
+ * <p>The login system uses a simple text file named logins.txt to store pairs of username and
+ * password.
  *
- * Note: For this project, we intentionally use a basic text file login system
- * because authentication is not the main objective here. In a real application,
- * a more advanced and secure login system would be required.
+ * <p>Note: For this project, we intentionally use a basic text file login system because
+ * authentication is not the main objective here. In a real application, a more advanced and secure
+ * login system would be required.
  *
- * General behavior:
- * - If the user exists and the password is correct: login is successful
- * - If the user exists but the password is incorrect: error
- * - If the user does not exist: the account is created
- * - If the user is already logged in: error
+ * <p>General behavior: - If the user exists and the password is correct: login is successful - If
+ * the user exists but the password is incorrect: error - If the user does not exist: the account is
+ * created - If the user is already logged in: error
  */
 public class Login {
   public static final String LOGIN_FILE = "logins.txt";
-    /**
-     * Handles a player's login request.
-     *
-     * The expected format from the client is:
-     * LOGIN username password
-     *
-     * This method verifies if the user exists, checks the correctness of the
-     * password, creates a new account if needed, and prevents multiple logins
-     * with the same username.
-     *
-     * @param socket the client's socket
-     * @param in the client's input stream
-     * @param out the client's output stream
-     * @return a Player object if login succeeds, null otherwise
-     */
+
+  /**
+   * Handles a player's login request.
+   *
+   * <p>The expected format from the client is: LOGIN username password
+   *
+   * <p>This method verifies if the user exists, checks the correctness of the password, creates a
+   * new account if needed, and prevents multiple logins with the same username.
+   *
+   * @param socket the client's socket
+   * @param in the client's input stream
+   * @param out the client's output stream
+   * @return a Player object if login succeeds, null otherwise
+   */
   public static Player login(Socket socket, BufferedReader in, BufferedWriter out) {
     // making sure the file exists
     File loginsFile = new File(LOGIN_FILE);

@@ -30,7 +30,7 @@ public class Client implements Callable<Integer> {
     HELP,
     QUIT,
     LOGIN,
-    PLAYERS,
+    PLAYERS_LIST,
     CHALLENGES,
     CHALLENGE,
     ACCEPT,
@@ -39,7 +39,7 @@ public class Client implements Callable<Integer> {
   }
 
   public static final String[] lobbyOptions = {
-    "CHALLENGE", "ACCEPT", "REFUSE", "REFRESH", "HELP", "QUIT"
+    "PLAYERS_LIST", "CHALLENGE", "ACCEPT", "REFUSE", "REFRESH", "HELP", "QUIT"
   };
 
   @CommandLine.Option(
@@ -86,6 +86,9 @@ public class Client implements Callable<Integer> {
             break;
           }
           switch (input.split(" ")[0].toUpperCase()) {
+            case "PLAYERS_LIST":
+              listAllPlayer(socket, in, out, consoleReader);
+              break;
             case "CHALLENGE":
               inGame = challengePlayer(socket, in, out, consoleReader, username);
               break;

@@ -1,7 +1,7 @@
 package ch.heigvd.commands;
 
-import ch.heigvd.Client.Client;
-import ch.heigvd.Server.Server;
+import ch.heigvd.client.Client;
+import ch.heigvd.server.Server;
 import picocli.CommandLine;
 
 @CommandLine.Command(

@@ -1,9 +1,9 @@
-package ch.heigvd.Server.Functions;
+package ch.heigvd.server.functions;
 
-import ch.heigvd.Client.Client;
-import ch.heigvd.Common.Norms;
-import ch.heigvd.Common.Player;
-import ch.heigvd.Server.Server;
+import ch.heigvd.client.Client;
+import ch.heigvd.common.Norms;
+import ch.heigvd.common.Player;
+import ch.heigvd.server.Server;
 import java.io.*;
 import java.net.Socket;
 

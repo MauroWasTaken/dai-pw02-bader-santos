@@ -1,17 +1,17 @@
-package ch.heigvd.Server.Functions;
+package ch.heigvd.server.functions;
 
-import ch.heigvd.Common.Challenge;
-import ch.heigvd.Common.Norms;
-import ch.heigvd.Common.Player;
-import ch.heigvd.Server.Server;
+import ch.heigvd.common.Challenge;
+import ch.heigvd.common.Game;
+import ch.heigvd.common.Norms;
+import ch.heigvd.common.Player;
+import ch.heigvd.server.Server;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.net.Socket;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Matchmaking {
-  public static void getChallenges(
-      Socket socket, BufferedReader in, BufferedWriter out, Player player) {
+  public static void getChallenges(BufferedWriter out, Player player) {
     try {
       StringBuilder sb = new StringBuilder(Server.Message.CHALLENGES + " ");
       for (Challenge challenge : player.challenges) {
@@ -26,11 +26,10 @@ public class Matchmaking {
     }
   }
 
-  public static boolean challengePlayer(
+  public static Game challengePlayer(
       Socket socket,
-      BufferedReader in,
       BufferedWriter out,
-      Player challanger,
+      Player challenger,
       CopyOnWriteArrayList<Player> players,
       String username) {
     try {
@@ -43,7 +42,7 @@ public class Matchmaking {
           if (player.status == Player.Status.IN_GAME) {
             out.write(Server.Message.ERROR + " " + 2 + Norms.END_OF_LINE);
             out.flush();
-            return false;
+            return null;
           }
         }
       }
@@ -51,18 +50,19 @@ public class Matchmaking {
         String response = Server.Message.ERROR + " " + 1 + Norms.END_OF_LINE;
         out.write(response);
         out.flush();
-        return false;
+        return null;
       }
-      Challenge challenge = new Challenge(challanger.username);
+      Challenge challenge = new Challenge(challenger.username);
       challenged.challenges.add(challenge);
       while (challenge.status == Challenge.Status.PENDING) {
         Thread.sleep(100);
       }
       if (challenge.status == Challenge.Status.ACCEPTED) {
-        challanger.status = Player.Status.IN_GAME;
-        out.write(Server.Message.GAMESTART + Norms.END_OF_LINE); // todo ajouter qui va en premier
+        challenger.status = Player.Status.IN_GAME;
+        int firstPlayer = challenge.game.isPlayer1Turn.get() ? 2 : 1;
+        out.write(Server.Message.GAMESTART + " " + firstPlayer + Norms.END_OF_LINE);
         out.flush();
-        return true;
+        return challenge.game;
       }
       out.write(Server.Message.REFUSE + Norms.END_OF_LINE);
       out.flush();
@@ -74,21 +74,23 @@ public class Matchmaking {
         System.out.println("[Server] Exception while closing socket: " + ee);
       }
     }
-    return false;
+    return null;
   }
 
-  public static boolean acceptChallenge(
+  public static Game acceptChallenge(
       Socket socket, BufferedReader in, BufferedWriter out, Player player, String username) {
     try {
       for (Challenge challenge : player.challenges) {
         if (challenge.challenger.username.equals(username)
             && challenge.status == Challenge.Status.PENDING) {
+          challenge.game = new ch.heigvd.common.Game(player, challenge.challenger);
           challenge.status = Challenge.Status.ACCEPTED;
           player.status = Player.Status.IN_GAME;
           player.challenges.clear();
-          out.write(Server.Message.GAMESTART + Norms.END_OF_LINE); // todo ajouter qui va en premier
+          int firstPlayer = challenge.game.isPlayer1Turn.get() ? 1 : 2;
+          out.write(Server.Message.GAMESTART + " " + firstPlayer + Norms.END_OF_LINE);
           out.flush();
-          return true;
+          return challenge.game;
         }
       }
     } catch (Exception e) {
@@ -99,7 +101,7 @@ public class Matchmaking {
         System.out.println("[Server] Exception while closing socket: " + ee);
       }
     }
-    return false;
+    return null;
   }
 
   public static void refuseChallenge(

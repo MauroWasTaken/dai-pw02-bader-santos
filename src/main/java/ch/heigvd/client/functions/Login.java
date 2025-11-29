@@ -1,8 +1,8 @@
-package ch.heigvd.Client.Functions;
+package ch.heigvd.client.functions;
 
-import ch.heigvd.Client.Client;
-import ch.heigvd.Common.Norms;
-import ch.heigvd.Server.Server;
+import ch.heigvd.client.Client;
+import ch.heigvd.common.Norms;
+import ch.heigvd.server.Server;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;

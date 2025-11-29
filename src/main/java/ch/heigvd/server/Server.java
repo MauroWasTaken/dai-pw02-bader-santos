@@ -1,11 +1,13 @@
-package ch.heigvd.Server;
+package ch.heigvd.server;
 
-import static ch.heigvd.Server.Functions.Login.login;
-import static ch.heigvd.Server.Functions.Matchmaking.*;
+import static ch.heigvd.server.functions.GameFunctions.gameLoop;
+import static ch.heigvd.server.functions.Login.login;
+import static ch.heigvd.server.functions.Matchmaking.*;
 
-import ch.heigvd.Client.Client;
-import ch.heigvd.Common.Norms;
-import ch.heigvd.Common.Player;
+import ch.heigvd.client.Client;
+import ch.heigvd.common.Game;
+import ch.heigvd.common.Norms;
+import ch.heigvd.common.Player;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -28,7 +30,9 @@ public class Server implements Callable<Integer> {
     ERROR,
     CHALLENGES,
     REFUSE,
-    GAMESTART
+    GAMESTART,
+    PLAY,
+    GAME_OVER;
   }
 
   @CommandLine.Option(
@@ -64,7 +68,9 @@ public class Server implements Callable<Integer> {
   static class ClientHandler implements Runnable {
 
     private final Socket socket;
-    private boolean ingame = false;
+    private boolean inGame = false;
+    private Game game = null;
+    private Player player = null;
 
     public ClientHandler(Socket socket) {
       this.socket = socket;
@@ -97,29 +103,38 @@ public class Server implements Callable<Integer> {
         out.write(Message.OK + Norms.END_OF_LINE);
         out.flush();
         // login
-        Player player = login(socket, in, out);
+        player = login(socket, in, out);
         if (player == null) {
           return;
         }
 
         while (!socket.isClosed()) {
-          String clientResponse = in.readLine();
-          String[] clientResponseParts = clientResponse.split(" ", 2);
-          Client.Message message = Client.Message.valueOf(clientResponseParts[0]);
-          if (ingame) {
+          if (inGame) {
             // game functions
+            gameLoop(socket, in, out, game, player.username);
+            inGame = false;
           } else {
             // lobby functions
+            String clientResponse = in.readLine();
+            String[] clientResponseParts = clientResponse.split(" ", 2);
+            Client.Message message = Client.Message.valueOf(clientResponseParts[0]);
+            Game result;
             switch (message) {
                 // matchmaking functions
               case CHALLENGES:
-                getChallenges(socket, in, out, player);
+                getChallenges(out, player);
                 break;
               case CHALLENGE:
-                ingame = challengePlayer(socket, in, out, player, players, clientResponseParts[1]);
+                game = challengePlayer(socket, out, player, players, clientResponseParts[1]);
+                if (game != null) {
+                  inGame = true;
+                }
                 break;
               case ACCEPT:
-                ingame = acceptChallenge(socket, in, out, player, clientResponseParts[1]);
+                game = acceptChallenge(socket, in, out, player, clientResponseParts[1]);
+                if (game != null) {
+                  inGame = true;
+                }
                 break;
               case REFUSE:
                 refuseChallenge(socket, in, out, player, clientResponseParts[1]);

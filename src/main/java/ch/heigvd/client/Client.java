@@ -1,12 +1,14 @@
-package ch.heigvd.Client;
+package ch.heigvd.client;
 
-import static ch.heigvd.Client.Functions.Login.login;
-import static ch.heigvd.Client.Functions.Matchmaking.*;
-import static ch.heigvd.Client.Functions.UI.*;
+import static ch.heigvd.client.functions.GameFunctions.gameloop;
+import static ch.heigvd.client.functions.Login.login;
+import static ch.heigvd.client.functions.Matchmaking.*;
+import static ch.heigvd.client.functions.UI.*;
 
-import ch.heigvd.Common.Norms;
-import ch.heigvd.Common.Player;
-import ch.heigvd.Server.Server;
+import ch.heigvd.common.Game;
+import ch.heigvd.common.Norms;
+import ch.heigvd.common.Player;
+import ch.heigvd.server.Server;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -18,12 +20,12 @@ import picocli.CommandLine;
 public class Client implements Callable<Integer> {
   public static ArrayList<Player> players = new ArrayList<>();
   public static ArrayList<Player> challenges = new ArrayList<>();
-  static boolean inLobby = false;
-  static boolean inGame = false;
+  public static boolean inGame = false;
+  public static boolean myTurn = false;
+  public static Game game = null;
   public static String message = "";
 
   public enum Message {
-    GUESS,
     RESTART,
     HELP,
     QUIT,
@@ -112,8 +114,8 @@ public class Client implements Callable<Integer> {
         }
         // Game loop
         if (inGame) {
-          // Placeholder for game loop
-          System.out.println("Game start!");
+          gameloop(socket, in, out, consoleReader, username);
+          inGame = false;
         }
       }
 

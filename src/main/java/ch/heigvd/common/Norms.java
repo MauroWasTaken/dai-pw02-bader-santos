@@ -1,4 +1,4 @@
-package ch.heigvd.Common;
+package ch.heigvd.common;
 
 public class Norms {
   // End of line character

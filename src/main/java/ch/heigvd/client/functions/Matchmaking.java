@@ -1,17 +1,15 @@
-package ch.heigvd.Client.Functions;
+package ch.heigvd.client.functions;
 
-import ch.heigvd.Client.Client;
-import ch.heigvd.Common.Norms;
-import ch.heigvd.Common.Player;
-import ch.heigvd.Server.Server;
+import ch.heigvd.client.Client;
+import ch.heigvd.common.Norms;
+import ch.heigvd.common.Player;
+import ch.heigvd.server.Server;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
 public class Matchmaking {
-  static final String ERROR_MESSAGE =
-      "Something went wrong while requesting challenges from server.";
 
   public static ArrayList<Player> getChallenges(
       Socket socket, BufferedReader in, BufferedWriter out) {
@@ -23,7 +21,6 @@ public class Matchmaking {
         String[] serverResponseParts = serverResponse.split(" ", 2);
         Server.Message message = Server.Message.valueOf(serverResponseParts[0]);
         if (message != Server.Message.CHALLENGES) {
-          Client.message = ERROR_MESSAGE;
           return new ArrayList<>();
         }
         String[] challengersUsernames = serverResponseParts[1].split(Norms.OBJECT_SEPARATOR);
@@ -35,7 +32,6 @@ public class Matchmaking {
         }
         return challengers;
       } catch (Exception e) {
-        Client.message = ERROR_MESSAGE;
         return new ArrayList<>();
       }
     }
@@ -69,7 +65,7 @@ public class Matchmaking {
         String serverResponse = in.readLine();
         Server.Message message = Server.Message.valueOf(serverResponse.split(" ")[0]);
         if (message == Server.Message.GAMESTART) {
-          Client.message += challengedUsername + " accepted your challenge!";
+          Client.myTurn = Integer.parseInt(serverResponse.split(" ")[1]) == 1;
           return true;
         } else if (message == Server.Message.ERROR) {
           switch (Integer.parseInt(serverResponse.split(" ")[1])) {
@@ -112,10 +108,16 @@ public class Matchmaking {
         }
         out.write(Client.Message.ACCEPT + " " + challengerUsername + Norms.END_OF_LINE);
         out.flush();
-        challengers.clear();
-        return true;
+        String serverResponse = in.readLine();
+        Server.Message message = Server.Message.valueOf(serverResponse.split(" ")[0]);
+        if (message == Server.Message.GAMESTART) {
+          Client.myTurn = Integer.parseInt(serverResponse.split(" ")[1]) == 1;
+          return true;
+        } else if (message == Server.Message.ERROR) {
+          Client.message = "Error while accepting challenge.";
+        }
       } catch (Exception e) {
-        System.out.println("Something went wrong while responding to challenge.");
+        Client.message = "Something went wrong while responding to challenge.";
       }
     }
     return false;

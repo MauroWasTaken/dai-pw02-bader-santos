@@ -42,7 +42,7 @@ public class Server implements Callable<Integer> {
     REFUSE,
     GAMESTART,
     PLAY,
-      GAMEOVER;
+    GAMEOVER;
   }
 
   /**

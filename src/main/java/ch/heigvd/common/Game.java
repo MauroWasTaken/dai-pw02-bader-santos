@@ -3,24 +3,51 @@ package ch.heigvd.common;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Simple model of a Tic-Tac-Toe game used by the server and client.
+ *
+ * <p>The Game object stores references to the two participating players, the board state and
+ * concurrency-safe flags used by the server to coordinate turns and game termination.
+ */
 public class Game {
   public String[] board = new String[9];
   public Player player1;
   public Player player2;
+
+  /** True when it is player1's turn. */
   public AtomicBoolean isPlayer1Turn = new AtomicBoolean(true);
+
+  /** True when the game has finished (winner set or draw). */
   public AtomicBoolean isOver = new AtomicBoolean(false);
+
+  /** Winning player instance when isOver is true and the game didn't draw; null for draws. */
   public Player winner = null;
+
+  /** Preferred symbol for player1. */
   public final String player1Symbol = "X";
+
+  /** Preferred symbol for player2. */
   public final String player2Symbol = "O";
+
+  /** Index of the last move played (-1 if none). */
   public AtomicInteger lastMove = new AtomicInteger(-1);
+
+  /** True if a player disconnected and the other player should be credited with the win. */
   public AtomicBoolean hasDisconnect = new AtomicBoolean(false);
 
+  /** Create an empty game with an empty board. Players must be set later. */
   public Game() {
     for (int i = 0; i < 9; i++) {
       board[i] = " ";
     }
   }
 
+  /**
+   * Create a game with two players. The starting player is chosen randomly.
+   *
+   * @param player1 first player (will use the X symbol)
+   * @param player2 second player (will use the O symbol)
+   */
   public Game(Player player1, Player player2) {
     this.player1 = player1;
     this.player2 = player2;
@@ -30,6 +57,13 @@ public class Game {
     }
   }
 
+  /**
+   * Attempt to make a move on behalf of the player identified by username.
+   *
+   * @param position board position (0..8)
+   * @param username username of the player making the move
+   * @return true if the move has been accepted and applied, false otherwise
+   */
   public boolean makeMove(int position, String username) {
     Player player = username.equals(player1.username) ? player1 : player2;
     if (isOver.get() || position < 0 || position > 8 || !board[position].equals(" ")) {
@@ -46,6 +80,7 @@ public class Game {
     return false;
   }
 
+  /** Check current board for a winning condition or a draw and update isOver/winner accordingly. */
   private void checkWin() {
     String[][] winConditions = {
       {board[0], board[1], board[2]},
@@ -78,6 +113,11 @@ public class Game {
     }
   }
 
+  /**
+   * Returns whether the board is full (no empty cells left).
+   *
+   * @return true when no cell equals " "
+   */
   private boolean isBoardFull() {
     for (String cell : board) {
       if (cell.equals(" ")) {

@@ -20,8 +20,6 @@ public class Matchmaking {
    *
    * <p>The message format is: CHALLENGES challengerName1;challengerName2;
    *
-   * @param socket client socket
-   * @param in input stream associated with the client
    * @param out output stream associated with the client
    * @param player player whose pending challenges must be retrieved
    */
@@ -50,12 +48,11 @@ public class Matchmaking {
    * <p>Error codes sent: ERROR 1 : player not found ERROR 2 : target player already in game
    *
    * @param socket sender's socket
-   * @param in sender's input stream
    * @param out sender's output stream
-   * @param challanger player sending the challenge
+   * @param challenger player sending the challenge
    * @param players list of all connected players
    * @param username username of the targeted player
-   * @return true if the challenge is accepted and the game can start, false otherwise
+   * @return a Game instance if the challenge is accepted, or null otherwise
    */
   public static Game challengePlayer(
       Socket socket,
@@ -119,7 +116,7 @@ public class Matchmaking {
    * @param out output stream
    * @param player player accepting the challenge
    * @param username challenger username
-   * @return true if the challenge was accepted, false otherwise
+   * @return a Game instance when the challenge is accepted, or null otherwise
    */
   public static Game acceptChallenge(
       Socket socket, BufferedReader in, BufferedWriter out, Player player, String username) {
@@ -183,6 +180,13 @@ public class Matchmaking {
     }
   }
 
+  /**
+   * Sends a comma-separated representation of all connected players to the provided writer.
+   *
+   * @param socket client socket used for error handling (may be closed on exception)
+   * @param out writer communicating with the client
+   * @param players list of connected players
+   */
   public static void sendListPlayers(
       Socket socket, BufferedWriter out, CopyOnWriteArrayList<Player> players) {
     try {

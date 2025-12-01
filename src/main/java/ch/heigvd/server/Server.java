@@ -42,7 +42,7 @@ public class Server implements Callable<Integer> {
     REFUSE,
     GAMESTART,
     PLAY,
-    GAME_OVER;
+    GAMEOVER;
   }
 
   /**
@@ -202,5 +202,20 @@ public class Server implements Callable<Integer> {
         }
       }
     }
+  }
+
+  /**
+   * Returns the Player object registered on the server matching the provided username.
+   *
+   * @param username username to lookup
+   * @return the Player instance if found, null otherwise
+   */
+  public static Player getPlayerByUsername(String username) {
+    for (Player player : players) {
+      if (player.username.equals(username)) {
+        return player;
+      }
+    }
+    return null;
   }
 }

@@ -4,8 +4,15 @@ import ch.heigvd.client.Client;
 import ch.heigvd.common.Game;
 import ch.heigvd.common.Player;
 
+/**
+ * Simple console UI helpers used by the client to render lobby and game state.
+ *
+ * <p>All methods are static and operate on the shared Client state. This class intentionally
+ * contains only minimal presentation logic for the terminal UI.
+ */
 public class UI {
 
+  /** Append a short help message to the client message buffer (displayed on next render). */
   public static void help() {
     String help =
         "\n=== Help Menu ===\n"
@@ -30,6 +37,11 @@ public class UI {
     Client.message += help;
   }
 
+  /**
+   * Render the lobby view for the provided username.
+   *
+   * @param username the username of the local player (displayed in the header)
+   */
   public static void drawLobby(String username) {
     // Source - https://stackoverflow.com/a
     // Posted by Bhuvanesh Waran, modified by community. See post 'Timeline' for change history
@@ -58,36 +70,45 @@ public class UI {
     }
 
     if (!Client.challenges.isEmpty()) {
-      System.out.println("== Challenges ==:");
+      System.out.println("\n== Challenges ==:");
       for (Player p : Client.challenges) {
         System.out.println(p.username);
       }
     }
-    System.out.println("== Commands ==:");
+    System.out.println("\n== Commands ==:");
     for (String option : Client.lobbyOptions) {
       System.out.println(option + " ");
     }
     System.out.print("Please enter a command: ");
   }
 
+  /**
+   * Render the game view showing the current board and prompt state.
+   *
+   * @param username the username of the local player (displayed in the header)
+   * @param game the current game model containing the board
+   * @param yourTurn whether it's the local player's turn
+   */
   public static void drawGame(String username, Game game, boolean yourTurn) {
     System.out.print("\033\143");
     if (!Client.message.isEmpty()) System.out.print(Client.message + "\n\n");
 
     System.out.println("Welcome to the Game " + username + " !");
     Client.message = "";
-    System.out.println("== Game State ==");
+    System.out.println("\n== Game State ==");
     printBoard(game.board);
     if (yourTurn) {
       System.out.println("It's your turn to play!");
-      System.out.println("== Commands ==:");
+      System.out.println("\n== Commands ==");
       System.out.println("<row> <col>");
+      System.out.println("QUIT\n");
       System.out.print("Please enter a command: ");
     } else {
       System.out.println("Waiting for opponent to play...");
     }
   }
 
+  /** Print the tic-tac-toe board to the console. */
   private static void printBoard(String[] gameState) {
     System.out.println("Current Board:");
     System.out.println("  0 1 2");

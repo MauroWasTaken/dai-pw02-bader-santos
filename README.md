@@ -24,12 +24,12 @@ The key features for this project would be:
 | **mode** | **argument** | **description** |
 | --- | --- | --- |
 | Server | server -p <port> -t <nbplayers> | starts application in server mode |
-| Client | client -p <port> | start application in client mode and connects to server in <port> |
+| Client | client -h <address> -p <port> | start application in client mode and connects to server in <port> |
 
 the defaults are :
-
-- 42069: for the port
-- 12: for the nbplayers
+- `localhost` for the address
+- `42069` for the port
+- `12` for the nbplayers
 
 ## Application Protocol
 
@@ -45,9 +45,11 @@ The TTT protocol is a text message transport protocol. It must use the TCP (Tran
 
 Every message must be encoded in UTF-8 and delimited by a newline character (`\n`). The messages are treated as text messages.
 
-The initial connection must be established by the client.
+The initial connection must be established by the client, And the server should return an Ok signal if connection was established correctly.
 
-Once the connection is established, the client can join the server with a given username and a password encrypted with (TODO)(optional).
+The server may return an error code if its full.
+
+Once the connection is established, the client can join the server with a given username and a password.
 
 The server must verify the following
 
@@ -108,7 +110,7 @@ LOGIN <username> <password>
 ```
 
 - `username`: the user name of the client
-- `password`: the password of the client encrypted using (TODO)
+- `password`: the password of the client
 
 **Response**
 
@@ -129,11 +131,9 @@ PLAYERS
 
 **Response**
 
-- `PLAYERS <client1> <client2> <client3> ...`: the list of connected clients. The clients are separated by a space.
-    - the individual clients are seperated by <username>:<wins>:<losses>:<draws>:<winstreaks>:<status>, seperated by “.”
-        - status is an integer between 0 and 1 inclusive, the following codes are:
-            - 0 - playing
-            - 1 - in lobby (waiting)
+- `PLAYERS <client1>;<client2>;<client3> ...`: the list of connected clients. The clients are separated by a ";".
+    - the individual clients attributes are seperated by <username>:<wins>:<losses>:<draws>:<winstreaks>:<status>, seperated by “,”
+        - status is enum and should be the same between server and client
 
 **Challenge player**
 
@@ -167,9 +167,11 @@ ACCEPT <username>
 **Response**
 
 - `ERROR <code>`: an error occurred while sending the message. The error code is an integer between 1 and 1 inclusive. The error codes are as follows:
-    - 1: user isn’t challenging
+    - 1: user isn’t available
+- `GAMESTART` : if the challenge was accepted
+- `REFUSE` : if the challenge was declined
 
-**Refuse a challenge**
+**Refuse a challenge (Client)**
 
 After receiving a challenge from the server the client may accept as follows
 
@@ -181,10 +183,15 @@ REFUSE <username>
 
 - `username`: the opponnent’s username
 
-**Response**
+**Refuse a challenge (Server)**
 
-- `ERROR <code>`: an error occurred while sending the message. The error code is an integer between 1 and 1 inclusive. The error codes are as follows:
-    - 1: user isn’t challenging
+Sent as a response to a CHALLENGE message
+
+**Request**
+
+```
+REFUSE
+```
 
 **Game Start**
 
@@ -193,10 +200,9 @@ The server indicates to the different client that the game is going to start wit
 **Request**
 
 ```
-STARTGAME <username> <is_first>
+GAMESTART <is_first>
 ```
 
-- `username`: the opponnent’s username
 - `is_first`: is an integer between 1 and 2 inclusive : the codes have the following meanings:
     - 1: the client plays first
     - 2: the client plays second
@@ -239,7 +245,7 @@ PLAY <line> <row>
 
 **Response**
 
-None.
+its usually followed by another play message from the client
 
 **Game end**
 
@@ -250,7 +256,7 @@ The server indicates both clients that their game is over and send them the resu
 **Request**
 
 ```
-ENDGAME <code>
+GAMEOVER <code>
 ```
 
 - `code`: is an integer between 0 and 3 inclusive that indicates the result of the match. the codes have the following meaning:
@@ -270,7 +276,7 @@ None.
 ```mermaid
 sequenceDiagram
     Client->>Server: 1. Establish connection
-    Server-->>Client: 2. Connection established
+    Server-->>Client: 2. OK
     Note over Client,Server: Login process
     Client->>Server: 3. LOGIN <username> <password>
     par Login is valid
@@ -291,11 +297,11 @@ sequenceDiagram
     Server ->> Client2 : 8. CHALLENGE <username>
     par Client 2 accepts the match
 	    Client2 ->> Server: 9. ACCEPT <username>
-	    Server ->> Client : 10. STARTGAME <username> <is first>
-	    Server ->> Client2 : 10. STARTGAME <username> <is first>
+	    Server ->> Client : 10. GAMESTART <is first>
+	    Server ->> Client2 : 10. GAMESTART <is first>
     and Client 2 refuses the match
       Client2 ->> Server: 9. REFUSE <username>
-	    Server ->> Client : 10. REFUSE <username>
+	    Server ->> Client : 10. REFUSE
     end
 	  
 ```
@@ -354,7 +360,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    Client->>Server: Connection terminated
+    Client->>Server: QUIT
 		Server ->> Client2: ENDGAME 3
 	  note over Client2 : back to lobby behavior
 	  

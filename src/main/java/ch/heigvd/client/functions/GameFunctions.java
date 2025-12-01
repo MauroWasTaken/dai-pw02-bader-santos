@@ -10,7 +10,26 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.net.Socket;
 
+/**
+ * Client-side game management utilities.
+ *
+ * <p>Handles the local console UI loop for a single Tic-Tac-Toe match and translates user input
+ * into the protocol messages sent to the server. It also receives server messages and updates the
+ * local board representation.
+ */
 public class GameFunctions {
+  /**
+   * Runs the game loop for the client side.
+   *
+   * <p>Protocol overview (client &lt;-&gt; server): - PLAY r c : play a move at row r, column c -
+   * GAME_OVER code : final result where code is 0=draw,1=win,2=loss,3=opponent disconnected
+   *
+   * @param socket connection to the server
+   * @param in buffered reader from the server
+   * @param out buffered writer to the server
+   * @param consoleReader reader to obtain local user input (system in)
+   * @param username username of the local player (used only for UI messages)
+   */
   public static void gameloop(
       Socket socket,
       BufferedReader in,
@@ -18,13 +37,16 @@ public class GameFunctions {
       BufferedReader consoleReader,
       String username) {
     Game game = new Game();
+    // instantiate player symbols
     String playerSymbol = Client.myTurn ? "X" : "O";
     String opponentSymbol = Client.myTurn ? "O" : "X";
+
     while (!socket.isClosed())
       try {
+        // Draw the game state
         drawGame(username, game, Client.myTurn);
-
         if (Client.myTurn) {
+          // Prompt user for their move
           System.out.print("Enter your move (row and column): ");
           String userInput = consoleReader.readLine();
           String[] userInputParts = userInput.split(" ", 2);
@@ -72,7 +94,7 @@ public class GameFunctions {
               Client.message = "Opponent played at (" + row + ", " + column + ")";
               Client.myTurn = true;
               break;
-            case GAME_OVER:
+            case GAMEOVER:
               String result = serverResponseParts[1];
               if (result.equals("1")) {
                 Client.message = "You won the game!";

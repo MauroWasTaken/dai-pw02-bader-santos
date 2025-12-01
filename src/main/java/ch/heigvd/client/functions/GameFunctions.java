@@ -94,7 +94,7 @@ public class GameFunctions {
               Client.message = "Opponent played at (" + row + ", " + column + ")";
               Client.myTurn = true;
               break;
-            case GAME_OVER:
+            case GAMEOVER:
               String result = serverResponseParts[1];
               if (result.equals("1")) {
                 Client.message = "You won the game!";

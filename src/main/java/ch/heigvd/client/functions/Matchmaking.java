@@ -209,7 +209,7 @@ public class Matchmaking {
           return;
         }
 
-        String[] raw = serverResponse.split(",");
+        String[] raw = serverResponse.split(Norms.ELEMENT_SEPARATOR);
 
         int fieldsPerPlayer = 5;
         for (int i = 0; i + fieldsPerPlayer - 1 < raw.length; i += fieldsPerPlayer) {

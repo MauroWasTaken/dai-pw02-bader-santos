@@ -74,7 +74,7 @@ public class GameFunctions {
                     player.losses++;
                     player.winStreak = 0;
                   }
-                  out.write(Server.Message.GAME_OVER + " " + code + Norms.END_OF_LINE);
+                  out.write(Server.Message.GAMEOVER + " " + code + Norms.END_OF_LINE);
                   out.flush();
                   return;
                 }
@@ -112,7 +112,7 @@ public class GameFunctions {
             player.wins++;
             player.winStreak++;
             player.status = Player.Status.ONLINE;
-            out.write(Server.Message.GAME_OVER + " " + 3 + Norms.END_OF_LINE);
+            out.write(Server.Message.GAMEOVER + " " + 3 + Norms.END_OF_LINE);
             out.flush();
             return;
           }
@@ -134,7 +134,7 @@ public class GameFunctions {
               player.losses++;
               player.winStreak = 0;
             }
-            out.write(Server.Message.GAME_OVER + " " + code + Norms.END_OF_LINE);
+            out.write(Server.Message.GAMEOVER + " " + code + Norms.END_OF_LINE);
             out.flush();
             return;
           }

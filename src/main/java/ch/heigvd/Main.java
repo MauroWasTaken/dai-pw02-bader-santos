@@ -4,6 +4,12 @@ import ch.heigvd.commands.Root;
 import java.io.File;
 import picocli.CommandLine;
 
+/**
+ * Entry point launcher for the application.
+ *
+ * <p>This class sets up Picocli and forwards command line arguments to the configured root command.
+ * The command name is set to the running JAR filename so help messages show a useful program name.
+ */
 public class Main {
 
   /**

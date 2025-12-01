@@ -16,15 +16,38 @@ import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
+/**
+ * Console client application for the network Tic-Tac-Toe game.
+ *
+ * <p>This class implements a Picocli command and contains the high-level client state used by the
+ * UI and networking helper classes. The application connects to a server, performs login, displays
+ * the lobby and participates in games.
+ */
 @CommandLine.Command(name = "client", description = "Start the client part of the network game.")
 public class Client implements Callable<Integer> {
+  /** List of players currently known in the lobby (refreshed by the server). */
   public static ArrayList<Player> players = new ArrayList<>();
+
+  /** List of challenges received by this client. */
   public static ArrayList<Player> challenges = new ArrayList<>();
+
+  /** Flag indicating whether the client is currently inside a game. */
   public static boolean inGame = false;
+
+  /** Flag indicating whether it's the local player's turn. */
   public static boolean myTurn = false;
+
+  /** Local copy of the current game state while in a match. */
   public static Game game = null;
+
+  /** Message shown by the UI (status, errors, etc.). */
   public static String message = "";
 
+  /**
+   * Enumeration of client-side commands/messages sent to the server.
+   *
+   * <p>The names mirror the server-side protocol and are converted to strings when sent.
+   */
   public enum Message {
     RESTART,
     HELP,
@@ -38,6 +61,7 @@ public class Client implements Callable<Integer> {
     PLAY
   }
 
+  /** Valid options shown in the lobby UI. */
   public static final String[] lobbyOptions = {
     "CHALLENGE", "ACCEPT", "REFUSE", "REFRESH", "HELP", "QUIT"
   };
@@ -54,6 +78,12 @@ public class Client implements Callable<Integer> {
       defaultValue = "42069")
   protected int port;
 
+  /**
+   * Main client execution method invoked by Picocli. Connects to the server, performs login and
+   * drives the lobby / game loops until the application exits.
+   *
+   * @return exit code for the process (0 on success)
+   */
   @Override
   public Integer call() {
     try (Socket socket = new Socket(host, port);
@@ -126,6 +156,13 @@ public class Client implements Callable<Integer> {
     return 0;
   }
 
+  /**
+   * Refreshes lobby data by requesting challenges and the current player list from the server.
+   *
+   * @param socket server socket
+   * @param in server input stream
+   * @param out server output stream
+   */
   public static void fetchData(Socket socket, BufferedReader in, BufferedWriter out) {
     Client.challenges.clear();
     Client.challenges.addAll(getChallenges(socket, in, out));

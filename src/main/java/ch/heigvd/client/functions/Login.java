@@ -10,7 +10,21 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Client-side login helper.
+ *
+ * <p>Prompts the user for username and password and forwards credentials to the server using the
+ * LOGIN protocol message.
+ */
 public class Login {
+  /**
+   * Prompt for credentials and perform login handshake with the server.
+   *
+   * @param socket connection to the server
+   * @param in server input stream
+   * @param out server output stream
+   * @return the username on success, null on failure or disconnect
+   */
   public static String login(Socket socket, BufferedReader in, BufferedWriter out) {
     final String ERROR_MESSAGE = "Something went wrong please try again";
     String username;

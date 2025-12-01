@@ -9,8 +9,20 @@ import java.io.BufferedWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
+/**
+ * Client-side matchmaking helpers: request challenges, send/accept/refuse challenges and fetch the
+ * list of players.
+ */
 public class Matchmaking {
 
+  /**
+   * Request the list of pending challenges from the server and parse them into Player objects.
+   *
+   * @param socket server socket
+   * @param in server input stream
+   * @param out server output stream
+   * @return list of challengers (may be empty)
+   */
   public static ArrayList<Player> getChallenges(
       Socket socket, BufferedReader in, BufferedWriter out) {
     if (!socket.isClosed()) {
@@ -38,6 +50,11 @@ public class Matchmaking {
     return new ArrayList<>();
   }
 
+  /**
+   * Send a challenge to another player by username using interactive console input.
+   *
+   * @return true if the client should enter the game loop (challenge accepted)
+   */
   public static boolean challengePlayer(
       Socket socket,
       BufferedReader in,
@@ -51,7 +68,8 @@ public class Matchmaking {
         String challengedUsername = consoleReader.readLine().split(" ")[0];
 
         if (challengedUsername.equals(username)) {
-          Client.message += " (╯°□°）╯︵ ┻━┻   — Hold up! You cannot challenge yourself.";
+          Client.message +=
+              " (\u256f\u00b0\u25a1\u00b0\uFF09\u256f\uFE35 \u253b\u2501\u253b   \u2014 Hold up! You cannot challenge yourself.";
           return false;
         }
 
@@ -83,6 +101,11 @@ public class Matchmaking {
     return false;
   }
 
+  /**
+   * Accept an incoming challenge using interactive console input and notify the server.
+   *
+   * @param challengers list of pending challengers shown in the lobby UI
+   */
   public static boolean acceptChallenge(
       Socket socket,
       BufferedReader in,
@@ -123,6 +146,10 @@ public class Matchmaking {
     return false;
   }
 
+  /**
+   * Interactive refuse helper (reads username from console) that forwards to the non-interactive
+   * variant.
+   */
   public static void refuseChallenge(
       Socket socket,
       BufferedReader in,
@@ -146,6 +173,10 @@ public class Matchmaking {
     }
   }
 
+  /**
+   * Non-interactive refuse: send a REFUSE message for the specified challenger and remove it
+   * locally.
+   */
   public static void refuseChallenge(
       Socket socket,
       BufferedReader in,
@@ -163,6 +194,7 @@ public class Matchmaking {
     }
   }
 
+  /** Request the list of all players and populate Client.players from the server response. */
   public static void getAllPlayers(Socket socket, BufferedReader in, BufferedWriter out) {
 
     if (!socket.isClosed()) {

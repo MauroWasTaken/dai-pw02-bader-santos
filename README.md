@@ -170,6 +170,10 @@ Exemple:
 docker push ghcr.io/ayc3s/name-app:release
 ```
 
+Congratulation ! You now should have your image on github.
+
+You can check it in your github accout at : https://github.com/users/username/packages/container/package/
+
 
 ## Application Protocol
 

@@ -505,3 +505,7 @@ sequenceDiagram
 	  note over Client2 : back to lobby behavior
 	  
 ```
+
+# Use of AI
+
+In this project, the only use of AI was to simplify our writing such as the readme and the comments in the code.

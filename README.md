@@ -49,7 +49,8 @@ In this section, we will see how to manage and run the application with docker. 
 | `-V`   | `--version` | –           | View version      |
 
 
----
+
+
 
 ## 2. Dockerfile Used
 
@@ -71,7 +72,7 @@ ENTRYPOINT ["java", "-jar", "app.jar", "server"]
 | `EXPOSE 42069`                | Default TCP port used by the server         |
 | `ENTRYPOINT`                  | By default, launches the **server** command |
 
----
+
 
 ## 3. Building the Docker Image
 
@@ -81,7 +82,7 @@ Then build the Docker image:
 
 `docker build -t name-of-the-app .`
 
----
+
 
 ## 4. Running the Server in Docker
 
@@ -99,10 +100,9 @@ Explanation:
 - `-p custom_port` : exposes  a custom TCP port to your host
 
 - `-t custom_thread` : set the number of player (thread) to N
-- ---
+
 
 ## 5. Connecting a Client to the Dockerized Server
-
 
 Run it normally outside of Docker:
 
@@ -125,9 +125,11 @@ java -jar dai-pw02-bader-santos-1.0-SNAPSHOT.jar client -p 42055
 
 # How to publish a container to github registry
 
-See full documentation here :
-[github documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+In this section, we will see how to publish our image to github registry
 
+See
+[github documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+for the official documentation
 ## Step 1 - Log in to GHCR
 
 If you have not logged in yet:
@@ -167,6 +169,7 @@ Exemple:
 ``` bash
 docker push ghcr.io/ayc3s/ttt-game:release
 ```
+
 
 ## Application Protocol
 

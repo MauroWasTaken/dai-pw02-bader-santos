@@ -8,7 +8,7 @@ The key features for this project would be:
 - Client is put into a lobby where he can see the list of online clients and their status (refreshes every x seconds).
 - From the lobby, the client is able to challenge another client to a match
     - Client is able to accept or refuse the challenge
-    
+
 - In game
     - The server will choose a client to play first at random
     - do until someone wins or board is full
@@ -19,17 +19,166 @@ The key features for this project would be:
 - Score keeping (wins / draws / losses / winstreak)
 - An average looking game interface for the client
 
-## Arguments
+# Building and Running with docker
 
-| **mode** | **argument** | **description** |
-| --- | --- | --- |
-| Server | server -p <port> -t <nbplayers> | starts application in server mode |
-| Client | client -p <port> | start application in client mode and connects to server in <port> |
+## 1. Overview
 
-the defaults are :
+In this section, we will see how to manage and run the application with docker. There is two main options :
 
-- 42069: for the port
-- 12: for the nbplayers
+- `server` — starts the multithreaded TCP server
+
+- `client` — starts the TCP client
+
+
+### `server` command
+
+| Option | Long format | Default | Rôle                                |
+| ------ | ----------- | ------- | ----------------------------------- |
+| `-p`   | `--port`    | `42069` | Define the TCP port                 |
+| `-t`   | `--threads` | `12`    | Number of thread (number of player) |
+| `-h`   | `--help`    | –       | View help message                   |
+| `-V`   | `--version` | –       | View version                        |
+
+### `Client` command
+
+| Option | Long format | Default     | Rôle              |
+| ------ | ----------- | ----------- | ----------------- |
+| `-H`   | `--host`    | `localhost` | Server host       |
+| `-p`   | `--port`    | `42069`     | Server port       |
+| `-h`   | `--help`    | –           | View help message |
+| `-V`   | `--version` | –           | View version      |
+
+
+
+
+
+## 2. Dockerfile Used
+
+``` dockerfile
+FROM eclipse-temurin:21-jdk 
+WORKDIR /app 
+COPY target/dai-pw02-bader-santos-1.0-SNAPSHOT.jar app.jar 
+EXPOSE 42069 
+ENTRYPOINT ["java", "-jar", "app.jar", "server"]
+```
+
+### What this Dockerfile does
+
+| Directive                     | Purpose                                     |
+| ----------------------------- | ------------------------------------------- |
+| `FROM eclipse-temurin:21-jdk` | Uses the official JDK 21 image              |
+| `WORKDIR /app`                | Sets `/app` as the working directory        |
+| `COPY ... app.jar`            | Copies the  built JAR into the container    |
+| `EXPOSE 42069`                | Default TCP port used by the server         |
+| `ENTRYPOINT`                  | By default, launches the **server** command |
+
+
+
+## 3. Building the Docker Image
+
+Before building, ensure you have compiled your application into a .jar (with maven).
+
+Then build the Docker image:
+
+`docker build -t name-of-the-app .`
+
+
+
+## 4. Running the Server in Docker
+
+Start the container:
+
+```bash
+sudo docker run -p 42069:42069 ttt-game -p custom_port -t custom_thread
+```
+
+Explanation:
+- `--p 42069:42069` : map the port to be acessible from outside of the container
+
+- `--name game-server` : names the container
+
+- `-p custom_port` : exposes  a custom TCP port to your host
+
+- `-t custom_thread` : set the number of player (thread) to N
+
+
+## 5. Connecting a Client to the Dockerized Server
+
+Run it normally outside of Docker:
+
+`java -jar target/dai-pw02-bader-santos-1.0-SNAPSHOT.jar client`
+
+## 6. Full exemple
+
+```bash
+# after the app is dockerized
+
+# SERVER SIDE --------------------------------
+# Set custom port and custom number of thread
+docker run -p 42055:42055 ttt-game -p 42055 -t 8
+
+
+# CLIENT SIDE --------------------------------
+java -jar dai-pw02-bader-santos-1.0-SNAPSHOT.jar client -p 42055
+
+```
+
+# How to publish a container to github registry
+
+In this section, we will see how to publish our image to github registry
+
+See
+[github documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+for the official documentation
+## Step 1 - Log in to GHCR
+
+If you have not logged in yet:
+
+1. Create a GitHub Personal Access Token (classic)  
+   Scopes required:
+    - `write:packages`
+    - `read:packages`
+2. Login using your token:
+
+```bash
+echo YOUR_GITHUB_PAT | docker login ghcr.io -u Ayc3s --password-stdin
+```
+
+`YOUR_GITHUB_PAT` is your new token
+
+## Step 2 - Tag your local image for GHCR
+
+Docker images must be tagged with:
+
+`ghcr.io/<USERNAME>/<IMAGE_NAME>:<TAG>`
+
+Exemple:
+
+```bash
+docker tag ttt-game ghcr.io/ayc3s/name-app:release
+```
+
+## Step 3 - Push the tagged image to GHCR
+
+
+`docker push ghcr.io/USERNAME/<IMAGE_NAME>:<TAG>`
+
+
+
+Exemple:
+``` bash
+docker push ghcr.io/ayc3s/name-app:release
+```
+
+Congratulation ! You now should have your image on github.
+
+You can check it in your github accout at : https://github.com/users/username/packages/container/package/
+(remplace the username of course)
+
+
+
+You can find our package here : https://github.com/users/MauroWasTaken/packages/container/package/dai-pw02-bader-santos
+
 
 ## Application Protocol
 
@@ -45,9 +194,11 @@ The TTT protocol is a text message transport protocol. It must use the TCP (Tran
 
 Every message must be encoded in UTF-8 and delimited by a newline character (`\n`). The messages are treated as text messages.
 
-The initial connection must be established by the client.
+The initial connection must be established by the client, And the server should return an Ok signal if connection was established correctly.
 
-Once the connection is established, the client can join the server with a given username and a password encrypted with (TODO)(optional).
+The server may return an error code if its full.
+
+Once the connection is established, the client can join the server with a given username and a password.
 
 The server must verify the following
 
@@ -93,7 +244,7 @@ Once the last move is played, the server will do the following:
 - if there’s a winner, the winning client will receive a win message and the other one will receive a losing message server
 - if its a tie, both players should recieve a draw message from the server
 
- both players should then ask for the list of all connected and the cycle continues
+both players should then ask for the list of all connected and the cycle continues
 
 ### Section 3 - Messages
 
@@ -108,7 +259,7 @@ LOGIN <username> <password>
 ```
 
 - `username`: the user name of the client
-- `password`: the password of the client encrypted using (TODO)
+- `password`: the password of the client
 
 **Response**
 
@@ -129,11 +280,9 @@ PLAYERS
 
 **Response**
 
-- `PLAYERS <client1> <client2> <client3> ...`: the list of connected clients. The clients are separated by a space.
-    - the individual clients are seperated by <username>:<wins>:<losses>:<draws>:<winstreaks>:<status>, seperated by “.”
-        - status is an integer between 0 and 1 inclusive, the following codes are:
-            - 0 - playing
-            - 1 - in lobby (waiting)
+- `PLAYERS <client1>;<client2>;<client3> ...`: the list of connected clients. The clients are separated by a ";".
+    - the individual clients attributes are seperated by <username>:<wins>:<losses>:<draws>:<winstreaks>:<status>, seperated by “,”
+        - status is enum and should be the same between server and client
 
 **Challenge player**
 
@@ -167,9 +316,11 @@ ACCEPT <username>
 **Response**
 
 - `ERROR <code>`: an error occurred while sending the message. The error code is an integer between 1 and 1 inclusive. The error codes are as follows:
-    - 1: user isn’t challenging
+    - 1: user isn’t available
+- `GAMESTART` : if the challenge was accepted
+- `REFUSE` : if the challenge was declined
 
-**Refuse a challenge**
+**Refuse a challenge (Client)**
 
 After receiving a challenge from the server the client may accept as follows
 
@@ -181,10 +332,15 @@ REFUSE <username>
 
 - `username`: the opponnent’s username
 
-**Response**
+**Refuse a challenge (Server)**
 
-- `ERROR <code>`: an error occurred while sending the message. The error code is an integer between 1 and 1 inclusive. The error codes are as follows:
-    - 1: user isn’t challenging
+Sent as a response to a CHALLENGE message
+
+**Request**
+
+```
+REFUSE
+```
 
 **Game Start**
 
@@ -193,10 +349,9 @@ The server indicates to the different client that the game is going to start wit
 **Request**
 
 ```
-STARTGAME <username> <is_first>
+GAMESTART <is_first>
 ```
 
-- `username`: the opponnent’s username
 - `is_first`: is an integer between 1 and 2 inclusive : the codes have the following meanings:
     - 1: the client plays first
     - 2: the client plays second
@@ -239,7 +394,7 @@ PLAY <line> <row>
 
 **Response**
 
-None.
+its usually followed by another play message from the client
 
 **Game end**
 
@@ -250,7 +405,7 @@ The server indicates both clients that their game is over and send them the resu
 **Request**
 
 ```
-ENDGAME <code>
+GAMEOVER <code>
 ```
 
 - `code`: is an integer between 0 and 3 inclusive that indicates the result of the match. the codes have the following meaning:
@@ -270,7 +425,7 @@ None.
 ```mermaid
 sequenceDiagram
     Client->>Server: 1. Establish connection
-    Server-->>Client: 2. Connection established
+    Server-->>Client: 2. OK
     Note over Client,Server: Login process
     Client->>Server: 3. LOGIN <username> <password>
     par Login is valid
@@ -291,11 +446,11 @@ sequenceDiagram
     Server ->> Client2 : 8. CHALLENGE <username>
     par Client 2 accepts the match
 	    Client2 ->> Server: 9. ACCEPT <username>
-	    Server ->> Client : 10. STARTGAME <username> <is first>
-	    Server ->> Client2 : 10. STARTGAME <username> <is first>
+	    Server ->> Client : 10. GAMESTART <is first>
+	    Server ->> Client2 : 10. GAMESTART <is first>
     and Client 2 refuses the match
       Client2 ->> Server: 9. REFUSE <username>
-	    Server ->> Client : 10. REFUSE <username>
+	    Server ->> Client : 10. REFUSE
     end
 	  
 ```
@@ -354,8 +509,12 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    Client->>Server: Connection terminated
+    Client->>Server: QUIT
 		Server ->> Client2: ENDGAME 3
 	  note over Client2 : back to lobby behavior
 	  
 ```
+
+# Use of AI
+
+In this project, the only use of AI was to simplify our writing such as the readme and the comments in the code.

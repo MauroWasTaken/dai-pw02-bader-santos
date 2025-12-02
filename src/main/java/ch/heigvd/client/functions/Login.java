@@ -1,0 +1,90 @@
+package ch.heigvd.client.functions;
+
+import ch.heigvd.client.Client;
+import ch.heigvd.common.Norms;
+import ch.heigvd.server.Server;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+
+/**
+ * Client-side login helper.
+ *
+ * <p>Prompts the user for username and password and forwards credentials to the server using the
+ * LOGIN protocol message.
+ */
+public class Login {
+  /**
+   * Prompt for credentials and perform login handshake with the server.
+   *
+   * @param socket connection to the server
+   * @param in server input stream
+   * @param out server output stream
+   * @return the username on success, null on failure or disconnect
+   */
+  public static String login(Socket socket, BufferedReader in, BufferedWriter out) {
+    final String ERROR_MESSAGE = "Something went wrong please try again";
+    String username;
+    String request;
+    while (!socket.isClosed()) {
+      try {
+        // getting username and password from user
+        System.out.print("Username: ");
+        BufferedReader bir =
+            new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+        username = bir.readLine();
+        System.out.print("Password: ");
+        String password = bir.readLine();
+        // send login info to server
+        request = Client.Message.LOGIN + " " + username + " " + password + Norms.END_OF_LINE;
+        out.write(request);
+        out.flush();
+        // read server response
+        String serverResponse = in.readLine();
+        if (serverResponse == null) {
+          System.out.println(ERROR_MESSAGE);
+          socket.close();
+          continue;
+        }
+
+        String[] serverResponseParts = serverResponse.split(" ", 2);
+        Server.Message message = null;
+        try {
+          message = Server.Message.valueOf(serverResponseParts[0]);
+        } catch (IllegalArgumentException e) {
+          System.out.println(ERROR_MESSAGE);
+          continue;
+        }
+
+        switch (message) {
+          case OK:
+            return username;
+          case ERROR:
+            int errorCode = Integer.parseInt(serverResponseParts[1]);
+            switch (errorCode) {
+              case 1:
+                System.out.println("Error: User already logged in. Please try again.");
+                break;
+              case 2:
+                System.out.println("Error: Invalid username or password. Please try again.");
+                break;
+              default:
+                System.out.println(ERROR_MESSAGE);
+                break;
+            }
+            break;
+          default:
+            System.out.println(ERROR_MESSAGE);
+            break;
+        }
+
+      } catch (IOException e) {
+        System.out.println("\n" + ERROR_MESSAGE);
+      }
+    }
+    return null;
+  }
+}

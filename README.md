@@ -155,7 +155,7 @@ Docker images must be tagged with:
 Exemple:
 
 ```bash
-docker tag ttt-game ghcr.io/ayc3s/ttt-game:release
+docker tag ttt-game ghcr.io/ayc3s/name-app:release
 ```
 
 ## Step 3 - Push the tagged image to GHCR
@@ -167,7 +167,7 @@ docker tag ttt-game ghcr.io/ayc3s/ttt-game:release
 
 Exemple:
 ``` bash
-docker push ghcr.io/ayc3s/ttt-game:release
+docker push ghcr.io/ayc3s/name-app:release
 ```
 
 

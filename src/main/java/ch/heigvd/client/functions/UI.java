@@ -19,8 +19,6 @@ public class UI {
             + "Here are the commands you can use in the lobby:\n\n"
             + "  HELP\n"
             + "      Show this help menu.\n\n"
-            + "  PLAYERS\n"
-            + "      Display the list of connected players.\n\n"
             + "  CHALLENGE <username>\n"
             + "      Send a challenge request to the specified player.\n"
             + "      Example: CHALLENGE alice\n\n"
